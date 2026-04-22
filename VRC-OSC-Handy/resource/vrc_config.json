@@ -1,0 +1,73 @@
+{
+  "Spotify": {
+    "Next": "Handy/Spotify/Next",
+    "Last": "Handy/Spotify/Last",
+    "PlayPause": "Handy/Spotify/PlayPause",
+    "Song": "Handy/Spotify/Song",
+    "ProgressBar": "Handy/Spotify/ProgressBar"
+  },
+  "Other": {
+    "Time": "Handy/Other/Time",
+    "STT": "Handy/Other/STT"
+  },
+  "Strip0": {
+    "A1": "Handy/Strip0/A1",
+    "A2": "Handy/Strip0/A2",
+    "A3": "Handy/Strip0/A3",
+    "A4": "Handy/Strip0/A4",
+    "A5": "Handy/Strip0/A5",
+    "B1": "Handy/Strip0/B1",
+    "B2": "Handy/Strip0/B2",
+    "B3": "Handy/Strip0/B3",
+    "Mute": "Handy/Strip0/Mute",
+    "Gain": "Handy/Strip0/Gain"
+  },
+  "Strip1": {
+    "A1": "Handy/Strip1/A1",
+    "A2": "Handy/Strip1/A2",
+    "A3": "Handy/Strip1/A3",
+    "A4": "Handy/Strip1/A4",
+    "A5": "Handy/Strip1/A5",
+    "B1": "Handy/Strip1/B1",
+    "B2": "Handy/Strip1/B2",
+    "B3": "Handy/Strip1/B3",
+    "Mute": "Handy/Strip1/Mute",
+    "Gain": "Handy/Strip1/Gain"
+  },
+  "Strip2": {
+    "A1": "Handy/Strip2/A1",
+    "A2": "Handy/Strip2/A2",
+    "A3": "Handy/Strip2/A3",
+    "A4": "Handy/Strip2/A4",
+    "A5": "Handy/Strip2/A5",
+    "B1": "Handy/Strip2/B1",
+    "B2": "Handy/Strip2/B2",
+    "B3": "Handy/Strip2/B3",
+    "Mute": "Handy/Strip2/Mute",
+    "Gain": "Handy/Strip2/Gain"
+  },
+  "Strip3": {
+    "A1": "Handy/Strip3/A1",
+    "A2": "Handy/Strip3/A2",
+    "A3": "Handy/Strip3/A3",
+    "A4": "Handy/Strip3/A4",
+    "A5": "Handy/Strip3/A5",
+    "B1": "Handy/Strip3/B1",
+    "B2": "Handy/Strip3/B2",
+    "B3": "Handy/Strip3/B3",
+    "Mute": "Handy/Strip3/Mute",
+    "Gain": "Handy/Strip3/Gain"
+  },
+  "Strip4": {
+    "A1": "Handy/Strip4/A1",
+    "A2": "Handy/Strip4/A2",
+    "A3": "Handy/Strip4/A3",
+    "A4": "Handy/Strip4/A4",
+    "A5": "Handy/Strip4/A5",
+    "B1": "Handy/Strip4/B1",
+    "B2": "Handy/Strip4/B2",
+    "B3": "Handy/Strip4/B3",
+    "Mute": "Handy/Strip4/Mute",
+    "Gain": "Handy/Strip4/Gain"
+  }
+}

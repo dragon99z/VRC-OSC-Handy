@@ -1,0 +1,12 @@
+﻿{
+  "SpotifyConfig": {
+    "Enabled": false,
+    "ClientID": "your-client-id",
+    "ClientSecret": "your-client-secret"
+  },
+  "STT": {
+    "Model": 0,
+    "Language": 0,
+    "Translate": false
+  }
+}
