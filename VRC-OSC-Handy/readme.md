@@ -62,7 +62,7 @@ The default runtime that uses the CPU for inference. It is available on all plat
 
 #### Pre-requisites
 
- - Windows: Microsoft Visual C++ Redistributable for at least Visual Studio 2022 (x64) [Download Link](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+ - Windows: Microsoft Visual C++ Redistributable (x64) [Download Link](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
  - Windows 11 or Windows Server 2022 (or newer) is required
  - Linux: `libstdc++6`, `glibc 2.31`
  - macOS: TBD
@@ -85,7 +85,7 @@ For CPUs that do not support AVX instructions.
 
 #### Pre-requisites
 
- - Windows: Microsoft Visual C++ Redistributable for at least Visual Studio 2022 (x64) [Download Link](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+ - Windows: Microsoft Visual C++ Redistributable (x64) [Download Link](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
  - Windows 11 or Windows Server 2022 (or newer) is required
  - Linux: `libstdc++6`, `glibc 2.31`
  - macOS: TBD

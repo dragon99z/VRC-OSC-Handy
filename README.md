@@ -3,7 +3,7 @@
 > A Windows desktop companion app that bridges **Spotify**, **VoiceMeeter**, and **Whisper Speech-to-Text** directly into VRChat via the OSC protocol.
 
 [![Platform](https://img.shields.io/badge/platform-Windows-blue?logo=windows)](https://github.com/dragon99z/VRC-OSC-Handy)
-[![Framework](https://img.shields.io/badge/.NET%20Framework-4.8.1-purple)](https://dotnet.microsoft.com/)
+[![Framework](https://img.shields.io/badge/.NET-10%20LTS-purple)](https://dotnet.microsoft.com/)
 [![Language](https://img.shields.io/badge/language-C%23-green?logo=csharp)](https://github.com/dragon99z/VRC-OSC-Handy)
 [![License](https://img.shields.io/github/license/dragon99z/VRC-OSC-Handy)](LICENSE)
 [![DeepWiki](https://img.shields.io/badge/docs-DeepWiki-orange)](https://deepwiki.com/dragon99z/VRC-OSC-Handy)
@@ -28,7 +28,7 @@
 - Formats track name, artist, and progress information for the VRChat chatbox display
 
 ### 🎛️ VoiceMeeter Integration
-- Wraps the VoiceMeeter Remote API (`VmrapiDynWrap`) to dynamically generate UI controls in the main window
+- Uses a small native VoiceMeeter Remote API wrapper to dynamically generate UI controls in the main window
 - Supports gain sliders, mute toggles, and bus assignments
 - Polls VoiceMeeter for "dirty" parameter changes to reflect hardware state in the UI without manual refresh
 
@@ -50,9 +50,9 @@
 | Requirement | Details |
 |---|---|
 | **OS** | Windows 10 / 11 (64-bit recommended) |
-| **.NET Framework** | 4.8.1 |
-| **Build Tool** | Visual Studio 2022 |
-| **Architecture** | `x64` preferred (required for CefSharp & Whisper CUDA) |
+| **.NET** | 10 (LTS) |
+| **Build Tool** | Visual Studio 2026 |
+| **Architecture** | `x64` required for the native CefSharp/Whisper/VoiceMeeter components |
 | **VRChat** | OSC must be enabled in VRChat settings |
 | **VoiceMeeter** | Optional — only required for audio control features |
 | **Spotify Account** | Required for Spotify integration |
@@ -71,11 +71,11 @@ cd VRC-OSC-Handy
 
 ### 2. Open in Visual Studio
 
-Open `VRC-OSC-Handy.sln` in **Visual Studio 2022**.
+Open `VRC-OSC-Handy.sln` in **Visual Studio 2026**.
 
 ### 3. Restore NuGet Packages
 
-In Visual Studio, go to **Tools → NuGet Package Manager → Manage NuGet Packages for Solution** and restore all dependencies. Alternatively, right-click the solution in Solution Explorer and select **Restore NuGet Packages**.
+Restore the SDK-style NuGet dependencies. In Visual Studio use **Restore NuGet Packages**, or run `dotnet restore VRC-OSC-Handy.sln` from a Windows terminal.
 
 ### 4. Set Build Configuration
 
@@ -84,6 +84,8 @@ Set the build configuration to **Release** and the platform to **x64** for full 
 ### 5. Build and Run
 
 Build the solution and run the executable. On first launch, the application will automatically create the required configuration files in your AppData directory.
+
+For command-line builds on Windows: `dotnet build VRC-OSC-Handy.sln -c Release -p:Platform=x64`.
 
 ---
 
@@ -132,13 +134,13 @@ Maps VRChat avatar OSC parameters to application functions:
 |---|---|
 | `NAudio` | Microphone audio capture at 16 kHz |
 | `Whisper.net` | AI-powered speech-to-text (GGML models, CUDA support) |
-| `CefSharp.Wpf` | Embedded Chromium browser for Spotify OAuth2 login |
+| `CefSharp.Wpf.NETCore` | Embedded Chromium browser for Spotify OAuth2 login |
 | `SpotifyAPI.Web` | Spotify playback data polling |
 | `BuildSoft.OscCore` | OSC packet encoding |
 | `VRCOscLib` | VRChat-specific OSC abstractions |
-| `a-tg.VmrapiDynWrap` | VoiceMeeter Remote API wrapper |
+| In-tree VoiceMeeter wrapper | VoiceMeeter Remote API access via the installed native DLL |
 
-Native assemblies are resolved from a `lib/` sub-folder to keep the root executable directory clean.
+Native dependencies are supplied through NuGet/runtime assets and the application targets Windows x64. The old post-build `lib/` relocation step was removed because modern .NET requires runtime and dependency metadata to remain alongside the executable.
 
 ---
 

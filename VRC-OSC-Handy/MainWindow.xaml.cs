@@ -1,38 +1,34 @@
-﻿using System;
+using NAudio.Codecs;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using SpotifyAPI.Web;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using SpotifyAPI.Web;
-
 using VRC_OSC_Handy.Auth;
+using VRC_OSC_Handy.Config;
+using VRC_OSC_Handy.Func;
+using VRC_OSC_Handy.NAudio;
+using VRC_OSC_Handy.Osc;
 using VRC_OSC_Handy.Particles;
 using VRC_OSC_Handy.Update;
 using VRC_OSC_Handy.VoiceMeeter;
-using VRC_OSC_Handy.Osc;
-using System.Threading;
 using VRC_OSC_Handy.Wis;
-
 using Whisper.net;
 using Whisper.net.Ggml;
-using System.Security.Policy;
-using System.Text.RegularExpressions;
-using System.Windows.Controls.Primitives;
-using VRC_OSC_Handy.NAudio;
-using System.Collections.Generic;
-using NAudio.Codecs;
-using VRC_OSC_Handy.Config;
-using Newtonsoft.Json.Serialization;
-using VRC_OSC_Handy.Func;
 
 namespace VRC_OSC_Handy
 {
@@ -67,6 +63,12 @@ namespace VRC_OSC_Handy
         public static string cfg_path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/VRC Handy/";
 
         public static string modelPath = @"models\Base.bin";
+
+        private bool _updatingSpotifyClientID;
+        private bool _updatingSpotifyClientSecret;
+
+        private const string SpotifyClientIDPlaceholder = "your-client-id";
+        private const string SpotifyClientSecretPlaceholder = "your-client-secret";
 
         #region vmValDef
 
@@ -2591,6 +2593,11 @@ namespace VRC_OSC_Handy
 
         private void Time_Loaded(object sender, RoutedEventArgs e)
         {
+
+            string pattern = CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern;
+
+            bool uses24Hour = !pattern.Contains("tt");
+
             ct = updateToken.Token;
             TextBlock text = sender as TextBlock;
             Task.Run(() => { 
@@ -2602,13 +2609,21 @@ namespace VRC_OSC_Handy
                     {
                         if (ct.IsCancellationRequested)
                             break;
-                        Time.Text = DateTime.Now.ToString("HH:mm:ss tt");
+                        if (uses24Hour)
+                            Time.Text = DateTime.Now.ToString("HH:mm:ss");
+                        else
+                            Time.Text = DateTime.Now.ToString("HH:mm:ss tt");
                     }
                     else
                     {
                         if (ct.IsCancellationRequested)
                             break;
-                        Time.Dispatcher.Invoke(() => { Time.Text = DateTime.Now.ToString("HH:mm:ss tt"); });
+                        Time.Dispatcher.Invoke(() => {
+                            if(uses24Hour)
+                                Time.Text = DateTime.Now.ToString("HH:mm:ss");
+                            else
+                                Time.Text = DateTime.Now.ToString("HH:mm:ss tt"); 
+                        });
                     }
                     Thread.Sleep(250);
                 }
@@ -2742,12 +2757,12 @@ namespace VRC_OSC_Handy
         private void runSpotify_Click(object sender, RoutedEventArgs e)
         {
             Button button = sender as Button;
-            if(SotifyClientID.Password != "your-client-id" && SotifyClientSecret.Password != "your-client-secret")
+            if(SotifyClientID.RealText != SpotifyClientIDPlaceholder && SotifyClientSecret.RealText != SpotifyClientSecretPlaceholder)
             {
                 button.IsEnabled = false;
                 button.Foreground = new SolidColorBrush(Colors.Red);
-                config.SpotifyConfig.ClientID = SotifyClientID.Password;
-                config.SpotifyConfig.ClientSecret = SotifyClientSecret.Password;
+                config.SpotifyConfig.ClientID = SotifyClientID.RealText;
+                config.SpotifyConfig.ClientSecret = SotifyClientSecret.RealText;
 
                 SpotifyAuth auth = new SpotifyAuth();
                 auth.runAuth();
@@ -2756,25 +2771,43 @@ namespace VRC_OSC_Handy
             }
         }
 
+        public void hideSpotifyInput()
+        {
+            runSpotify.Visibility = Visibility.Hidden;
+
+            SotifyClientID.Visibility = Visibility.Hidden;
+            SotifyClientIDText.Visibility = Visibility.Hidden;
+
+            SotifyClientSecret.Visibility = Visibility.Hidden;
+            SotifyClientSecretText.Visibility = Visibility.Hidden;
+        }
+
         private void SotifyClientID_Loaded(object sender, RoutedEventArgs e)
         {
-            PasswordBox passwordBox = sender as PasswordBox;
-            passwordBox.Password = config.SpotifyConfig.ClientID;
+            SotifyClientID.RealText = config.SpotifyConfig.ClientID;
+
+            SotifyClientID.IsMasked =
+                SotifyClientID.RealText != SpotifyClientIDPlaceholder;
         }
 
         private void SotifyClientSecret_Loaded(object sender, RoutedEventArgs e)
         {
-            PasswordBox passwordBox = sender as PasswordBox;
-            passwordBox.Password = config.SpotifyConfig.ClientSecret;
+            SotifyClientSecret.RealText = config.SpotifyConfig.ClientSecret;
+
+            SotifyClientSecret.IsMasked =
+                SotifyClientSecret.RealText != SpotifyClientSecretPlaceholder;
         }
 
-        public void hideSpotifyInput()
+        private void SotifyClientID_LostFocus(object sender, RoutedEventArgs e)
         {
-            runSpotify.Visibility = Visibility.Hidden;
-            SotifyClientID.Visibility = Visibility.Hidden;
-            SotifyClientIDText.Visibility = Visibility.Hidden;
-            SotifyClientSecret.Visibility = Visibility.Hidden;
-            SotifyClientSecretText.Visibility = Visibility.Hidden;
+            SotifyClientID.IsMasked =
+                SotifyClientID.RealText != SpotifyClientIDPlaceholder;
+        }
+
+        private void SotifyClientSecret_LostFocus(object sender, RoutedEventArgs e)
+        {
+            SotifyClientSecret.IsMasked =
+                SotifyClientSecret.RealText != SpotifyClientSecretPlaceholder;
         }
 
         private void STTTranslate_Loaded(object sender, RoutedEventArgs e)

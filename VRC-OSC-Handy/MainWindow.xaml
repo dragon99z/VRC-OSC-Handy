@@ -4,10 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VRC_OSC_Handy"
+        xmlns:controls="clr-namespace:VRC_OSC_Handy.Controls"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Loaded="Window_Loaded" ResizeMode="NoResize" AllowsTransparency="True" WindowStyle="None" Background="{x:Null}" Foreground="Lime" Closing="Window_Closing">
 
     <Window.Resources>
+        <Style TargetType="{x:Type controls:MaskedTextBox}"
+           BasedOn="{StaticResource {x:Type TextBox}}" />
+        
         <Style  x:Key="RoundedButton" TargetType="{x:Type Button}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -318,8 +322,8 @@
                 <Rectangle x:Name="ProgressBar" Uid="Spotify.ProgressBar" HorizontalAlignment="Left" Height="6" Margin="10,65,0,0" VerticalAlignment="Top" Width="105" Fill="Lime" MouseRightButtonDown="setVRCParameterSpotify"/>
                 <TextBlock x:Name="SotifyClientIDText" HorizontalAlignment="Left" Margin="10,85,0,0" TextWrapping="Wrap" Text="ClientID" VerticalAlignment="Top"/>
                 <TextBlock x:Name="SotifyClientSecretText" HorizontalAlignment="Left" Margin="10,110,0,0" TextWrapping="Wrap" Text="ClientSecret" VerticalAlignment="Top"/>
-                <PasswordBox x:Name="SotifyClientID" HorizontalAlignment="Left" Margin="150,85,0,0" VerticalAlignment="Top" Width="220" Background="{x:Null}" Foreground="Lime" Loaded="SotifyClientID_Loaded"/>
-                <PasswordBox x:Name="SotifyClientSecret" HorizontalAlignment="Left" Margin="150,110,0,0" VerticalAlignment="Top" Width="220" Background="{x:Null}" Foreground="Lime" Loaded="SotifyClientSecret_Loaded"/>
+                <controls:MaskedTextBox x:Name="SotifyClientID" HorizontalAlignment="Left" Margin="150,85,0,0" VerticalAlignment="Top" Width="220" Height="20" Background="{x:Null}" Foreground="Lime" LostFocus="SotifyClientID_LostFocus" Loaded="SotifyClientID_Loaded" IsMasked="True" PlaceholderText="your-client-id"/>
+                <controls:MaskedTextBox x:Name="SotifyClientSecret" HorizontalAlignment="Left" Margin="150,110,0,0" VerticalAlignment="Top" Width="220" Height="20" Background="{x:Null}" Foreground="Lime" LostFocus="SotifyClientSecret_LostFocus" Loaded="SotifyClientSecret_Loaded" IsMasked="True" PlaceholderText="your-client-secret"/>
                 <Button x:Name="runSpotify" Content="Launch Spotify" VerticalAlignment="Top" Margin="150,135,10,0" Style="{StaticResource RoundedButton}" BorderBrush="{x:Null}" Background="#00000000" Foreground="Lime" IsEnabled="True" Click="runSpotify_Click"/>
 
             </Grid>

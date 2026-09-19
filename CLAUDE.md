@@ -4,19 +4,23 @@ Guidance for Claude Code (or Claude in general) working in this repository.
 
 ## What this is
 
-VRC-OSC-Handy is a Windows WPF (.NET Framework 4.8.1) desktop app that bridges
-Spotify, VoiceMeeter, and Whisper speech-to-text into VRChat via OSC. Single
-project (`VRC-OSC-Handy.csproj`) under `VRC-OSC-Handy/`. There is no test
-project, no CI, and the build only works on Windows (WPF, CefSharp, native
-VoiceMeeter/CUDA interop) — it cannot be built or run in a Linux sandbox.
+VRC-OSC-Handy is a Windows WPF (.NET 10) desktop app that bridges Spotify,
+VoiceMeeter, and Whisper speech-to-text into VRChat via OSC. The single SDK-style
+project (`VRC-OSC-Handy.csproj`) is under `VRC-OSC-Handy/`. There is no test
+project or CI. The build/runtime target is Windows x64 because of WPF, CefSharp,
+VoiceMeeter native API access, and Whisper CUDA runtimes.
 
 ## Build
 
-- Open `VRC-OSC-Handy.sln` in Visual Studio 2022, restore NuGet packages
-  (`packages.config`, old-style `packages/` restore, not PackageReference/SDK-style).
-- Build config: Release, platform x64 (required for CefSharp + Whisper CUDA).
-- No `dotnet build` support — this is classic .NET Framework with a
-  `packages.config`-based csproj, not SDK-style.
+- Open `VRC-OSC-Handy.sln` in Visual Studio 2026 with the .NET desktop
+  workload, restore NuGet packages, and build the SDK-style project.
+- Build config: Release, platform x64 (required for the native CefSharp and
+  Whisper/VoiceMeeter components).
+- Command-line build is supported by the modern SDK project; on Windows use:
+  `dotnet restore VRC-OSC-Handy.sln` and
+  `dotnet build VRC-OSC-Handy.sln -c Release -p:Platform=x64`.
+- A Linux sandbox still cannot execute or functionally test the Windows app;
+  use Windows for the final build/runtime validation.
 
 ## Architecture (read before changing behavior)
 
@@ -52,11 +56,10 @@ VoiceMeeter/CUDA interop) — it cannot be built or run in a Linux sandbox.
   `MainWindow`'s constructor and dozens of call sites in `MainWindow.xaml.cs`
   call `remoteControle.getBoolParameter(...)` etc. with no null checks. The
   README calls VoiceMeeter "optional", but the C# assumes it's always present.
-  This has **not** been changed here because it's unverified whether the
-  underlying `a-tg.VmrapiDynWrap` wrapper throws or fails silently when
-  VoiceMeeter isn't installed — verify against the actual library before
-  touching this, since a partial null-check pass across 100+ call sites is
-  easy to get wrong.
+  The legacy `a-tg.*` NuGet wrappers are now replaced by the in-tree native
+  wrapper in `VoiceMeeter/`, but the optional-installation behavior is still
+  unverified. A partial null-check pass across the many call sites would be a
+  separate deliberate change.
 - The `Strip0`..`Strip4` config classes (`Config/VRCParameterConfig.cs`) and
   the five near-identical UI-generation blocks in `MainWindow.xaml.cs` are
   duplicated on purpose to match VoiceMeeter's fixed 5-strip layout and the
@@ -105,26 +108,20 @@ VoiceMeeter/CUDA interop) — it cannot be built or run in a Linux sandbox.
   itself must be restarted to reclaim it. Don't present this as fully solving
   the leaked-slot issue; it narrows it to genuinely unrecoverable OS-level kills.
 
-## NuGet packages (2026 refresh)
+## NuGet packages
 
-`packages.config` and the matching `HintPath`/`Import`/`Error` paths in the
-`.csproj` were bumped to latest at the time: NAudio family → 2.3.0,
-SpotifyAPI.Web/.Auth → 7.4.2, Whisper.net family → 1.9.1. `BuildSoft.OscCore`,
-`VRCOscLib`, `EmbedIO`, `Unosquare.Swan.Lite`, `Newtonsoft.Json`, `log4net`,
-and the `a-tg.*` packages were already at their latest published version.
-The `CefSharp.Common` / `CefSharp.Wpf` / `chromiumembeddedframework.runtime.win-x64`
-/ `win-x86` quartet was deliberately left alone: these four must stay on a
-matching exact CEF build, packages.config has no transitive resolution, and
-hand-picking four version strings that don't actually match breaks the native
-CEF runtime load at startup. Bump that quartet from Visual Studio's NuGet UI
-(or `Update-Package -reinstall`) so NuGet's own resolver keeps them in lockstep.
+Direct dependencies are declared with SDK-style `<PackageReference>` entries in
+`VRC-OSC-Handy/VRC-OSC-Handy.csproj`.
 
-If a restore reports a missing package version that isn't in `packages.config`
-at all (a transitive dependency, possibly one of the native/obfuscation-runtime
-packages some of these libraries pull in), do a full clean restore rather than
-hand-placing files: delete `VRC-OSC-Handy/bin`, `VRC-OSC-Handy/obj`, and the
-solution's `packages/` folder, clear NuGet's HTTP cache
-(`nuget locals http-cache -clear`), then restore again.
+The current direct set includes NAudio 2.4.0, SpotifyAPI.Web/Auth 7.4.2,
+Whisper.net 1.9.1 with Windows CPU/CUDA/CUDA12 runtimes, Microsoft.Win32.Registry 5.0.0, Microsoft.Win32.SystemEvents 10.0.12, BuildSoft.OscCore,
+VRCOscLib, EmbedIO, Unosquare.Swan.Lite, Newtonsoft.Json, log4net, and
+CefSharp.Wpf.NETCore 152.0.60. The old Framework-only `a-tg.*` VoiceMeeter
+packages have been replaced by a small in-tree wrapper under `VoiceMeeter/`.
+
+Do not reintroduce `packages.config`, manual `HintPath` entries, or old-style
+CefSharp package references. For a clean restore, remove `bin/` and `obj/` and
+run `dotnet restore` on Windows.
 
 If you touch any of the above again, keep the fix local — this codebase
 favors small, targeted patches over refactors (see `AGENTS.md` for the same

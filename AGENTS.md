@@ -6,15 +6,15 @@ architectural walkthrough; this file is the quick operational contract.
 
 ## Environment reality check
 
-- Windows-only WPF app (.NET Framework 4.8.1). CefSharp, VoiceMeeter's native
-  wrapper, and Whisper's CUDA runtime mean this **cannot be built or run on
-  Linux/macOS CI**. If you're in a non-Windows sandbox, do not attempt
-  `dotnet build`/`msbuild` — validate changes by reading the code carefully
-  and reasoning about control flow instead of compiling.
+- Windows-only WPF app targeting .NET 10 (`net10.0-windows`) and x64. CefSharp,
+  VoiceMeeter, and Whisper use native Windows components, so the application is
+  not a cross-platform target. A Windows machine with the .NET 10 SDK / Visual
+  Studio 2026 is the canonical build environment.
 - No unit tests exist. Don't invent a test project unless asked; there's
-  nothing to wire it into and no CI to run it.
-- Restore is via `packages.config`, not `<PackageReference>`. Don't "modernize"
-  the csproj to SDK-style as a side effect of an unrelated task.
+  nothing to wire it into and no CI to run.
+- Restore is via SDK-style `<PackageReference>` entries in
+  `VRC-OSC-Handy/VRC-OSC-Handy.csproj`. Do not reintroduce `packages.config` or
+  the old Framework-style project.
 
 ## Scope discipline
 
@@ -47,12 +47,12 @@ architectural walkthrough; this file is the quick operational contract.
 
 `RemoteControle` (VoiceMeeter) is constructed unconditionally and used
 without null checks throughout `MainWindow.xaml.cs`, even though the README
-describes VoiceMeeter as optional. Whether this is a real bug depends on
-whether `a-tg.VmrapiDynWrap`'s `Login()`/`GetParameter()` throw or fail
-silently when VoiceMeeter isn't installed — that behavior isn't verifiable
-from this source tree alone. If asked to make VoiceMeeter truly optional,
-say so explicitly as a larger, deliberate change (needs null-guards at
-~100 call sites plus UI changes to hide the VoiceMeeter tab), not a quick fix.
+describes VoiceMeeter as optional. The legacy `a-tg.*` NuGet wrappers are no
+longer used; the modern project contains a small native wrapper in
+`VoiceMeeter/VoiceMeeterRemoteApi.cs`. The optional-installation behavior is
+still not guaranteed, because the UI assumes the VoiceMeeter backend is
+available. If asked to make VoiceMeeter truly optional, treat it as a larger
+change (null-guards plus UI changes), not a quick dependency fix.
 
 ## Already-fixed issues (don't reintroduce)
 
@@ -80,18 +80,23 @@ say so explicitly as a larger, deliberate change (needs null-guards at
 
 ## NuGet packages
 
-`packages.config` versions are pinned deliberately. If asked to update
-packages: bump each package's version string in both `packages.config` and
-every matching `HintPath`/`Import`/`Error` path in the `.csproj` (they must
-stay in sync since this is a packages.config, not PackageReference, project).
-Exception: never hand-pick versions for `CefSharp.Common`, `CefSharp.Wpf`,
-`chromiumembeddedframework.runtime.win-x64`, and
-`chromiumembeddedframework.runtime.win-x86` independently — they must resolve
-to one matching CEF build, and packages.config restore does no transitive
-resolution to catch a mismatch for you. Leave that quartet for the person to
-update via Visual Studio's NuGet UI, and say so explicitly rather than
-guessing four version numbers that might not actually correspond to the same
-CEF binary.
+This is now an SDK-style project using `<PackageReference>` in
+`VRC-OSC-Handy/VRC-OSC-Handy.csproj`. Keep direct dependency versions pinned
+there and let NuGet resolve transitive dependencies.
+
+- CefSharp uses `CefSharp.Wpf.NETCore` 152.0.60 rather than the old
+  `.NET Framework` `CefSharp.Wpf` package.
+- Whisper uses the CPU runtime plus the Windows CUDA and CUDA 12 Windows
+  runtime packages. Cross-platform runtimes are intentionally not restored by
+  this Windows x64 application.
+- The legacy `a-tg.VmrapiDynWrap` / `a-tg.UnmanagedLibWrap` packages are not
+  used. Their required subset of the VoiceMeeter Remote API is implemented in
+  source under `VoiceMeeter/` using `NativeLibrary`.
+- There is no `packages/` directory or `packages.config` restore step.
+
+When changing dependencies, prefer direct PackageReference changes and then
+perform a clean NuGet restore. Do not add back Framework-only reference paths
+or package imports from the old project format.
 
 ## Commit hygiene
 
