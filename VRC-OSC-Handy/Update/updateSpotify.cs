@@ -38,14 +38,15 @@ namespace VRC_OSC_Handy.Update
                     try
                     {
                         track = await spotify.Player.GetCurrentPlayback();
+                        sleep = 5000; // reset backoff after a successful call
                     }
-                    catch (APITooManyRequestsException e)
+                    catch (APITooManyRequestsException)
                     {
-                        Thread.Sleep(sleep);
+                        await Task.Delay(sleep);
                         sleep += 5000;
                     }
                 }
-                Thread.Sleep(1000);
+                await Task.Delay(1000);
             }
         }
 

@@ -191,7 +191,7 @@ namespace VRC_OSC_Handy.Osc
             while (!chat_ct.IsCancellationRequested)
             {
                 var track = updateSpotify.track;
-                if (track != null)
+                if (track?.Item != null) // Item is null during ads/private sessions
                 {
                     string msg = "";
                     if (song)

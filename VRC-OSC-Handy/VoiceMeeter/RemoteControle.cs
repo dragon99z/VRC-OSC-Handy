@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using AtgDev.Voicemeeter;
 using AtgDev.Voicemeeter.Utils;
+using VRC_OSC_Handy.Logger;
 
 namespace VRC_OSC_Handy.VoiceMeeter
 {
@@ -26,6 +27,10 @@ namespace VRC_OSC_Handy.VoiceMeeter
         CancellationTokenSource updateToken = new CancellationTokenSource();
         CancellationToken ct;
 
+        // Guards against double-Logout (harmless but avoids a second native call)
+        // and lets multiple exit paths race to clean up safely.
+        private int _loggedOut = 0;
+
         public RemoteControle()
         {
             ct = updateToken.Token;
@@ -34,7 +39,19 @@ namespace VRC_OSC_Handy.VoiceMeeter
             vmrApi.Login();
             vmrApi.GetVoicemeeterType(out type);
             Task.Run(() => UpdateParams(vmrApi), updateToken.Token);
+
+            // Best-effort safety net: release the VoiceMeeter Remote API slot on any
+            // "normal" process exit path that might not go through MainWindow's
+            // Closing handler (Environment.Exit, Windows logoff/shutdown, a
+            // console-style termination request). This does NOT help if the process
+            // is hard-killed (Task Manager "End Process"/taskkill /F, a native crash,
+            // or a power loss) - at that point the OS tears the process down without
+            // running any more managed code, so nothing in-process can call Logout().
+            // VoiceMeeter itself must be restarted to reclaim a slot leaked that way.
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => LogOut();
+            Microsoft.Win32.SystemEvents.SessionEnding += (s, e) => LogOut();
         }
+
 
         public void UpdateParams(RemoteApiWrapper remoteApi) 
         {
@@ -149,8 +166,21 @@ namespace VRC_OSC_Handy.VoiceMeeter
 
         public void LogOut()
         {
+            // Idempotent: ProcessExit, SessionEnding, and the normal Window_Closing
+            // path can all race to call this during shutdown.
+            if (Interlocked.Exchange(ref _loggedOut, 1) != 0)
+                return;
+
             updateToken.Cancel();
-            vmrApi.Logout();
+            try
+            {
+                vmrApi.Logout();
+            }
+            catch (Exception ex)
+            {
+                // Don't let a logout failure block the rest of app shutdown.
+                DebugLogger.LogError("VoiceMeeter Logout failed", ex);
+            }
         }
 
     }

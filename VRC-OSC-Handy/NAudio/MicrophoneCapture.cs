@@ -24,6 +24,7 @@ namespace VRC_OSC_Handy.NAudio
         private WhisperProcessor processor;
 
         private int chunkDurationMs = 5000; // 5-second chunks
+        private volatile bool isProcessingChunk = false;
 
         public void InitializeWhisper(string modelPath, string lang, bool translate)
         {
@@ -73,6 +74,15 @@ namespace VRC_OSC_Handy.NAudio
             if (bytesRecorded == 0)
                 return;
 
+            // WhisperProcessor isn't safe for concurrent ProcessAsync calls; if a chunk
+            // is still processing when the next one arrives, drop it instead of racing.
+            if (isProcessingChunk)
+            {
+                DebugLogger.LogWarning("Dropped audio chunk: previous chunk still processing.");
+                return;
+            }
+            isProcessingChunk = true;
+
             MemoryStream wavStream = null;
 
             try
@@ -103,6 +113,7 @@ namespace VRC_OSC_Handy.NAudio
             {
                 if (wavStream != null)
                     wavStream.Dispose();
+                isProcessingChunk = false;
             }
         }
 

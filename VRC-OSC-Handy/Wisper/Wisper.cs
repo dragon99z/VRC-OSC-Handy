@@ -109,9 +109,11 @@ namespace VRC_OSC_Handy.Wis
         private static async Task DownloadModel(string fileName, GgmlType ggmlType)
         {
             DebugLogger.Log($"Downloading Model {fileName}");
-            var modelStream = await WhisperGgmlDownloader.Default.GetGgmlModelAsync(ggmlType);
-            var fileWriter = File.OpenWrite(fileName);
-            await modelStream.CopyToAsync(fileWriter);
+            using (var modelStream = await WhisperGgmlDownloader.Default.GetGgmlModelAsync(ggmlType))
+            using (var fileWriter = File.OpenWrite(fileName))
+            {
+                await modelStream.CopyToAsync(fileWriter);
+            }
         }
 
         public void stop()

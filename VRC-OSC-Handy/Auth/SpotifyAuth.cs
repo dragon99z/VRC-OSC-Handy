@@ -25,7 +25,10 @@ namespace VRC_OSC_Handy.Auth
 
         public void runAuth()
         {
-            Auth().GetAwaiter().GetResult();
+            // Fire-and-forget: Auth() awaits UI-thread work (EmbedIOAuthServer.Start,
+            // Dispatcher calls), so blocking here with GetResult() deadlocks the UI
+            // thread that always calls runAuth(). Nothing needs the result synchronously.
+            _ = Auth();
         }
 
         public async Task Auth()

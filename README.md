@@ -3,7 +3,7 @@
 > A Windows desktop companion app that bridges **Spotify**, **VoiceMeeter**, and **Whisper Speech-to-Text** directly into VRChat via the OSC protocol.
 
 [![Platform](https://img.shields.io/badge/platform-Windows-blue?logo=windows)](https://github.com/dragon99z/VRC-OSC-Handy)
-[![Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-purple)](https://dotnet.microsoft.com/)
+[![Framework](https://img.shields.io/badge/.NET%20Framework-4.8.1-purple)](https://dotnet.microsoft.com/)
 [![Language](https://img.shields.io/badge/language-C%23-green?logo=csharp)](https://github.com/dragon99z/VRC-OSC-Handy)
 [![License](https://img.shields.io/github/license/dragon99z/VRC-OSC-Handy)](LICENSE)
 [![DeepWiki](https://img.shields.io/badge/docs-DeepWiki-orange)](https://deepwiki.com/dragon99z/VRC-OSC-Handy)
@@ -50,7 +50,7 @@
 | Requirement | Details |
 |---|---|
 | **OS** | Windows 10 / 11 (64-bit recommended) |
-| **.NET Framework** | 4.7.2 |
+| **.NET Framework** | 4.8.1 |
 | **Build Tool** | Visual Studio 2022 |
 | **Architecture** | `x64` preferred (required for CefSharp & Whisper CUDA) |
 | **VRChat** | OSC must be enabled in VRChat settings |
@@ -228,6 +228,18 @@ Contributions, bug reports, and feature requests are welcome! Please open an [is
 3. Commit your changes (`git commit -m 'Add my feature'`)
 4. Push to the branch (`git push origin feature/my-feature`)
 5. Open a Pull Request
+
+For architecture notes, build caveats, and rules for AI coding agents working
+in this repo, see [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
+
+### Known limitation
+
+VoiceMeeter support is constructed unconditionally at startup and used
+without null checks throughout `MainWindow.xaml.cs`, despite VoiceMeeter
+being documented above as optional. Whether this actually breaks on a
+machine without VoiceMeeter installed depends on the underlying native
+wrapper's error behavior and hasn't been confirmed. See `AGENTS.md` for
+details before attempting to "fix" this.
 
 ---
 

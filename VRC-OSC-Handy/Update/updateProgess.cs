@@ -23,7 +23,7 @@ namespace VRC_OSC_Handy.Update
             {
                 var track = updateSpotify.track;
 
-                if (track != null)
+                if (track?.Item != null) // Item is null during ads/private sessions
                 {
                     switch (track.Item.Type)
                     {
