@@ -5,6 +5,8 @@ VisualStudioVersion = 18.0.0.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VRC-OSC-Handy", "VRC-OSC-Handy\VRC-OSC-Handy.csproj", "{D901DF92-FC7C-452F-8544-C7CEF70794FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VRC-OSC-Handy.Tests", "VRC-OSC-Handy.Tests\VRC-OSC-Handy.Tests.csproj", "{3A7EA88E-0417-4E85-A6ED-28118C79F093}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{D901DF92-FC7C-452F-8544-C7CEF70794FC}.Debug|x64.Build.0 = Debug|x64
 		{D901DF92-FC7C-452F-8544-C7CEF70794FC}.Release|x64.ActiveCfg = Release|x64
 		{D901DF92-FC7C-452F-8544-C7CEF70794FC}.Release|x64.Build.0 = Release|x64
+		{3A7EA88E-0417-4E85-A6ED-28118C79F093}.Debug|x64.ActiveCfg = Debug|x64
+		{3A7EA88E-0417-4E85-A6ED-28118C79F093}.Debug|x64.Build.0 = Debug|x64
+		{3A7EA88E-0417-4E85-A6ED-28118C79F093}.Release|x64.ActiveCfg = Release|x64
+		{3A7EA88E-0417-4E85-A6ED-28118C79F093}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

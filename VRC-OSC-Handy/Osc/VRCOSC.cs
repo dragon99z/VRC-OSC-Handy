@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using VRC_OSC_Handy.Config;
 using VRC_OSC_Handy.Logger;
 using VRC_OSC_Handy.NAudio;
 using VRC_OSC_Handy.Update;
@@ -135,7 +136,7 @@ namespace VRC_OSC_Handy.Osc
                                 time = (bool)e.NewValue;
                                 break;
                             case "STT":
-                                if (wisper.isRunning != (bool)e.NewValue)
+                                if(wisper.isRunning != (bool)e.NewValue)
                                 {
                                     if ((bool)e.NewValue)
                                     {
@@ -147,7 +148,7 @@ namespace VRC_OSC_Handy.Osc
                                         wisper.stop();
                                         stt = false;
                                     }
-
+                                        
                                 }
                                 break;
                         }
@@ -232,8 +233,8 @@ namespace VRC_OSC_Handy.Osc
                                     string durationTime = string.Format("{0:D2}m:{1:D2}s", durationT.Minutes, durationT.Seconds);
                                     msg += (progressTime + " / " + durationTime + "\n");
                                 }
-
-
+                                    
+                                    
                                 break;
                             case ItemType.Episode:
                                 FullEpisode fullEpisod = (FullEpisode)track.Item;
@@ -258,13 +259,12 @@ namespace VRC_OSC_Handy.Osc
 
                     if (stt)
                     {
-                        if (msgSst != lastStt)
-                        {
+                        if (msgSst != lastStt) {
                             totalStt += msgSst;
                             lastStt = msgSst;
                         }
 
-                        if (loopStt < 4)
+                        if(loopStt < 4)
                         {
                             msg += totalStt;
                         }
@@ -283,7 +283,7 @@ namespace VRC_OSC_Handy.Osc
                         OscChatbox.SendMessage("", direct: true);
 
                     }
-
+                        
 
                     if ((song || progress || time || stt) && msg != "")
                         OscChatbox.SendMessage(msg, direct: true);
@@ -292,10 +292,12 @@ namespace VRC_OSC_Handy.Osc
             }
         }
 
-        public string GenerateProgressBar(int timestamp, int duration, int progressBarLength = 50)
+        public string GenerateProgressBar(int timestamp, int duration, int progressBarLength=50)
         {
-            // Calculate the percentage of song completion
-            double percentage = (double)timestamp / duration;
+            // Calculate the percentage of song completion, clamped so a progress value
+            // at or past the track end (which happens in practice near song end) can't
+            // push remainingCharacters negative below.
+            double percentage = duration <= 0 ? 0 : Math.Max(0, Math.Min(1, (double)timestamp / duration));
 
             // Calculate the number of characters to represent past and remaining time
             int pastCharacters = (int)(percentage * progressBarLength);
@@ -335,8 +337,8 @@ namespace VRC_OSC_Handy.Osc
             // Ensure the translated value is within the range [-60, 12]
             translatedValue = Math.Max(-60, Math.Min(12, translatedValue));
 
-            // Reverse the translation to get the original input value
-            float inputValue = (2 * translatedValue - (12 + 60)) / (12 + 60);
+            // True inverse of TranslateValue: (x+1)*(12-(-60))/2 + (-60) solved for x.
+            float inputValue = (translatedValue + 60) * 2 / (12 + 60) - 1;
 
             return inputValue;
         }
@@ -357,7 +359,7 @@ namespace VRC_OSC_Handy.Osc
             }
 
             var track = updateSpotify.track;
-            if (track != null)
+            if ( track != null )
             {
                 OscParameter.SendAvatarParameter("Handy/Spotify/PlayPause", track.IsPlaying);
             }
