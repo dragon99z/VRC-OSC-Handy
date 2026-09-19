@@ -248,7 +248,7 @@ details before attempting to "fix" this.
 ## Documentation
 
 Full technical documentation is available on **DeepWiki**:
-👉 [https://deepwiki.com/dragon99z/VRC-OSC-Handy](https://deepwiki.com/dragon99z/VRC-OSC-Handy)
+👉 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/dragon99z/VRC-OSC-Handy)
 
 ---
 
