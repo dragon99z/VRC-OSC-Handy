@@ -1,16 +1,11 @@
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using VRC_OSC_Handy.Config;
 using VRC_OSC_Handy.Func;
 
 namespace VRC_OSC_Handy.Update
@@ -55,7 +50,7 @@ namespace VRC_OSC_Handy.Update
             }
         }
 
-        public void WriteSong(TextBlock Song ,string song)
+        public void WriteSong(TextBlock Song, string song)
         {
             var uiAccess = Song.Dispatcher.CheckAccess();
 
@@ -70,7 +65,8 @@ namespace VRC_OSC_Handy.Update
             }
             else
             {
-                Song.Dispatcher.Invoke(() => {
+                Song.Dispatcher.Invoke(() =>
+                {
                     Song.Text = song;
                     if (song.Length > 30)
                         Song.FontSize = 12;
@@ -86,6 +82,9 @@ namespace VRC_OSC_Handy.Update
         {
 
             bool uiAccess = (Application.Current != null);
+
+            if (!uiAccess)
+                return;
 
             foreach (SimpleArtist artist in artists)
             {

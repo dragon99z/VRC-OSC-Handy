@@ -380,7 +380,7 @@ namespace VRC_OSC_Handy.Controls
             SelectionLength = 0;
         }
 
-        public static readonly DependencyProperty PlaceholderTextProperty = DependencyProperty.Register(nameof(PlaceholderText),typeof(string),typeof(MaskedTextBox),new FrameworkPropertyMetadata(string.Empty,OnPlaceholderTextChanged));
+        public static readonly DependencyProperty PlaceholderTextProperty = DependencyProperty.Register(nameof(PlaceholderText), typeof(string), typeof(MaskedTextBox), new FrameworkPropertyMetadata(string.Empty, OnPlaceholderTextChanged));
         public string PlaceholderText
         {
             get => (string)GetValue(PlaceholderTextProperty);

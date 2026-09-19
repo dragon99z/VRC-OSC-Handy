@@ -1,7 +1,5 @@
-using NAudio.Codecs;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
@@ -9,15 +7,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using VRC_OSC_Handy.Auth;
 using VRC_OSC_Handy.Config;
 using VRC_OSC_Handy.Func;
@@ -27,7 +22,6 @@ using VRC_OSC_Handy.Particles;
 using VRC_OSC_Handy.Update;
 using VRC_OSC_Handy.VoiceMeeter;
 using VRC_OSC_Handy.Wis;
-using Whisper.net;
 using Whisper.net.Ggml;
 
 namespace VRC_OSC_Handy
@@ -202,7 +196,7 @@ namespace VRC_OSC_Handy
             else
             {
                 var assembly = Assembly.GetExecutingAssembly();
-                string resourceName = assembly.GetName().Name.Replace("-","_") + ".resource." + filename;
+                string resourceName = assembly.GetName().Name.Replace("-", "_") + ".resource." + filename;
 
                 using (Stream stream = assembly.GetManifestResourceStream(resourceName))
                 using (StreamReader reader = new StreamReader(stream))
@@ -221,14 +215,14 @@ namespace VRC_OSC_Handy
             CompositionTarget.Rendering += CompositionTarget_Rendering;
 
 
-            if (config.SpotifyConfig.Enabled && config.SpotifyConfig.ClientID != "your-client-id" && config.SpotifyConfig.ClientSecret != "your-client-secret")
+            if (config.SpotifyConfig.Enabled && config.SpotifyConfig.ClientID != SpotifyClientIDPlaceholder && config.SpotifyConfig.ClientSecret != SpotifyClientSecretPlaceholder)
             {
                 SpotifyAuth auth = new SpotifyAuth();
                 auth.runAuth();
                 update();
             }
-            
-            
+
+
             osc.Run(remoteControle, spotify, wisper, modelPath);
         }
 
@@ -291,7 +285,7 @@ namespace VRC_OSC_Handy
                     }
                 }
             }
-            
+
         }
 
         private void PlayLast(object sender, RoutedEventArgs e)
@@ -299,7 +293,7 @@ namespace VRC_OSC_Handy
             if (config.SpotifyConfig.Enabled && spotify != null)
                 spotify.Player.SkipPrevious();
         }
-        
+
         private void VM_Controller_Loaded(object sender, RoutedEventArgs e)
         {
             vmt = updateVMToken.Token;
@@ -309,7 +303,7 @@ namespace VRC_OSC_Handy
             {
                 while (!vmt.IsCancellationRequested)
                 {
-                    if(type != remoteControle.type)
+                    if (type != remoteControle.type)
                     {
                         type = remoteControle.type;
 
@@ -371,7 +365,7 @@ namespace VRC_OSC_Handy
                     s0A1.Uid = "Strip[0].A1";
                     s0A1.Style = Resources["RoundedButton"] as Style;
                     s0A1.Background = Brushes.Transparent;
-                    if(remoteControle.getBoolParameter("Strip[0].A1"))
+                    if (remoteControle.getBoolParameter("Strip[0].A1"))
                         s0A1.Foreground = new SolidColorBrush(Color.FromArgb(255, 0, 255, 0));
                     else
                         s0A1.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 0, 0));
@@ -2538,9 +2532,9 @@ namespace VRC_OSC_Handy
         public void vmValueChange(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Slider gain = sender as Slider;
-            remoteControle.changeParameter(gain.Uid as string,(float)gain.Value);
+            remoteControle.changeParameter(gain.Uid as string, (float)gain.Value);
             TextBlock value = (TextBlock)GetByUid(VM_Controller, gain.Uid + "_Value");
-            value.Text = Math.Round(gain.Value,2).ToString();
+            value.Text = Math.Round(gain.Value, 2).ToString();
         }
 
         private void vmToggle(object sender, RoutedEventArgs e)
@@ -2573,13 +2567,13 @@ namespace VRC_OSC_Handy
 
             osc.stop();
 
-            
+
             updateToken.Cancel();
             updateVMToken.Cancel();
             remoteControle.LogOut();
-            if(wisper.isRunning)
+            if (wisper.isRunning)
                 wisper.stop();
-            
+
         }
 
         public static void saveAll()
@@ -2600,7 +2594,8 @@ namespace VRC_OSC_Handy
 
             ct = updateToken.Token;
             TextBlock text = sender as TextBlock;
-            Task.Run(() => { 
+            Task.Run(() =>
+            {
                 while (!ct.IsCancellationRequested)
                 {
                     var uiAccess = Time.Dispatcher.CheckAccess();
@@ -2618,11 +2613,12 @@ namespace VRC_OSC_Handy
                     {
                         if (ct.IsCancellationRequested)
                             break;
-                        Time.Dispatcher.Invoke(() => {
-                            if(uses24Hour)
+                        Time.Dispatcher.Invoke(() =>
+                        {
+                            if (uses24Hour)
                                 Time.Text = DateTime.Now.ToString("HH:mm:ss");
                             else
-                                Time.Text = DateTime.Now.ToString("HH:mm:ss tt"); 
+                                Time.Text = DateTime.Now.ToString("HH:mm:ss tt");
                         });
                     }
                     Thread.Sleep(250);
@@ -2648,7 +2644,7 @@ namespace VRC_OSC_Handy
                 foreach (string ggmlType in Enum.GetNames(typeof(GgmlType)))
                 {
                     ComboBoxItem item = new ComboBoxItem();
-                    if (files.Contains(ggmlType+ ".bin"))
+                    if (files.Contains(ggmlType + ".bin"))
                         item.Content = ggmlType;
                     else
                         item.Content = ggmlType + " (downloadable)";
@@ -2692,14 +2688,14 @@ namespace VRC_OSC_Handy
                 if (comboBoxItem.IsLoaded)
                 {
                     modelPath = @"models\" + comboBoxItem.Content;
-                    if(modelPath.Contains(" (downloadable)"))
+                    if (modelPath.Contains(" (downloadable)"))
                         modelPath = modelPath.Replace(" (downloadable)", "");
                     modelPath = modelPath + ".bin";
                     if (wasRunning)
-                        wisper.start(modelPath, MicrophoneCapture.LANGUAGES.Keys.ElementAt(config.STT.Language),config.STT.Translate);
+                        wisper.start(modelPath, MicrophoneCapture.LANGUAGES.Keys.ElementAt(config.STT.Language), config.STT.Translate);
                 }
             }
-            
+
         }
 
         private void STTEnablex_Click(object sender, RoutedEventArgs e)
@@ -2750,14 +2746,14 @@ namespace VRC_OSC_Handy
                 {
                     wisper.start(modelPath, MicrophoneCapture.LANGUAGES.Keys.ElementAt(config.STT.Language), config.STT.Translate);
                 }
-                    
+
             }
         }
 
         private void runSpotify_Click(object sender, RoutedEventArgs e)
         {
             Button button = sender as Button;
-            if(SotifyClientID.RealText != SpotifyClientIDPlaceholder && SotifyClientSecret.RealText != SpotifyClientSecretPlaceholder)
+            if (SotifyClientID.RealText != SpotifyClientIDPlaceholder && SotifyClientSecret.RealText != SpotifyClientSecretPlaceholder)
             {
                 button.IsEnabled = false;
                 button.Foreground = new SolidColorBrush(Colors.Red);

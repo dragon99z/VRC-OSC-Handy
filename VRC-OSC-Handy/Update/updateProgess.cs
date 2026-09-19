@@ -44,7 +44,7 @@ namespace VRC_OSC_Handy.Update
             }
         }
 
-        public void setProgess(Rectangle bar,double w)
+        public void setProgess(Rectangle bar, double w)
         {
             var uiAccess = bar.Dispatcher.CheckAccess();
 

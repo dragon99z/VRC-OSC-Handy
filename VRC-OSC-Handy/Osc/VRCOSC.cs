@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
-using VRC_OSC_Handy.Config;
 using VRC_OSC_Handy.Logger;
 using VRC_OSC_Handy.NAudio;
 using VRC_OSC_Handy.Update;
@@ -136,7 +135,7 @@ namespace VRC_OSC_Handy.Osc
                                 time = (bool)e.NewValue;
                                 break;
                             case "STT":
-                                if(wisper.isRunning != (bool)e.NewValue)
+                                if (wisper.isRunning != (bool)e.NewValue)
                                 {
                                     if ((bool)e.NewValue)
                                     {
@@ -148,7 +147,7 @@ namespace VRC_OSC_Handy.Osc
                                         wisper.stop();
                                         stt = false;
                                     }
-                                        
+
                                 }
                                 break;
                         }
@@ -233,8 +232,8 @@ namespace VRC_OSC_Handy.Osc
                                     string durationTime = string.Format("{0:D2}m:{1:D2}s", durationT.Minutes, durationT.Seconds);
                                     msg += (progressTime + " / " + durationTime + "\n");
                                 }
-                                    
-                                    
+
+
                                 break;
                             case ItemType.Episode:
                                 FullEpisode fullEpisod = (FullEpisode)track.Item;
@@ -259,12 +258,13 @@ namespace VRC_OSC_Handy.Osc
 
                     if (stt)
                     {
-                        if (msgSst != lastStt) {
+                        if (msgSst != lastStt)
+                        {
                             totalStt += msgSst;
                             lastStt = msgSst;
                         }
 
-                        if(loopStt < 4)
+                        if (loopStt < 4)
                         {
                             msg += totalStt;
                         }
@@ -283,7 +283,7 @@ namespace VRC_OSC_Handy.Osc
                         OscChatbox.SendMessage("", direct: true);
 
                     }
-                        
+
 
                     if ((song || progress || time || stt) && msg != "")
                         OscChatbox.SendMessage(msg, direct: true);
@@ -292,7 +292,7 @@ namespace VRC_OSC_Handy.Osc
             }
         }
 
-        public string GenerateProgressBar(int timestamp, int duration, int progressBarLength=50)
+        public string GenerateProgressBar(int timestamp, int duration, int progressBarLength = 50)
         {
             // Calculate the percentage of song completion
             double percentage = (double)timestamp / duration;
@@ -308,13 +308,13 @@ namespace VRC_OSC_Handy.Osc
             return progressBar;
         }
 
+        // Compiled once instead of on every call - this runs on every OSC "Strip" parameter change.
+        static readonly Regex digitsRegex = new Regex(@"\d+", RegexOptions.Compiled);
+
         static string AddSquareBrackets(string input)
         {
-            // Regular expression to match numbers
-            Regex regex = new Regex(@"\d+");
-
             // Replace numbers in the string with numbers enclosed in square brackets
-            string result = regex.Replace(input, match => "[" + match.Value + "]");
+            string result = digitsRegex.Replace(input, match => "[" + match.Value + "]");
 
             return result;
         }
@@ -357,7 +357,7 @@ namespace VRC_OSC_Handy.Osc
             }
 
             var track = updateSpotify.track;
-            if ( track != null )
+            if (track != null)
             {
                 OscParameter.SendAvatarParameter("Handy/Spotify/PlayPause", track.IsPlaying);
             }

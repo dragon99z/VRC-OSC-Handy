@@ -1,9 +1,9 @@
-﻿using CefSharp.Wpf;
-using CefSharp;
+﻿using CefSharp;
+using CefSharp.Wpf;
 using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
-using System.IO;
 
 namespace VRC_OSC_Handy.Auth
 {

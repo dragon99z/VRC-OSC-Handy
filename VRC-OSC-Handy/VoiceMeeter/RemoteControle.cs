@@ -1,12 +1,12 @@
-﻿using System;
+﻿using AtgDev.Voicemeeter;
+using AtgDev.Voicemeeter.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using AtgDev.Voicemeeter;
-using AtgDev.Voicemeeter.Utils;
 using VRC_OSC_Handy.Logger;
 
 namespace VRC_OSC_Handy.VoiceMeeter
@@ -26,6 +26,17 @@ namespace VRC_OSC_Handy.VoiceMeeter
 
         CancellationTokenSource updateToken = new CancellationTokenSource();
         CancellationToken ct;
+
+        // Cached instead of allocating a new SolidColorBrush per button on every 50ms tick.
+        static readonly SolidColorBrush activeBrush = FrozenBrush(0, 255, 0);
+        static readonly SolidColorBrush inactiveBrush = FrozenBrush(255, 0, 0);
+
+        static SolidColorBrush FrozenBrush(byte r, byte g, byte b)
+        {
+            var brush = new SolidColorBrush(Color.FromArgb(255, r, g, b));
+            brush.Freeze();
+            return brush;
+        }
 
         // Guards against double-Logout (harmless but avoids a second native call)
         // and lets multiple exit paths race to clean up safely.
@@ -53,15 +64,16 @@ namespace VRC_OSC_Handy.VoiceMeeter
         }
 
 
-        public void UpdateParams(RemoteApiWrapper remoteApi) 
+        public void UpdateParams(RemoteApiWrapper remoteApi)
         {
-            while (!ct.IsCancellationRequested) {
+            while (!ct.IsCancellationRequested)
+            {
                 remoteApi.IsParametersDirty();
                 vmrApi.GetVoicemeeterType(out type);
                 if (Application.Current != null)
                     Application.Current.Dispatcher.Invoke((Action)delegate
                     {
-                        if(Application.Current.MainWindow != null)
+                        if (Application.Current.MainWindow != null)
                         {
                             MainWindow mainWindow = (MainWindow)Application.Current.MainWindow;
                             List<Button> vmButtons = new List<Button>();
@@ -87,10 +99,7 @@ namespace VRC_OSC_Handy.VoiceMeeter
 
                             foreach (Button button in vmButtons)
                             {
-                                if (getBoolParameter(button.Uid))
-                                    button.Foreground = new SolidColorBrush(Color.FromArgb(255, 0, 255, 0));
-                                else
-                                    button.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 0, 0));
+                                button.Foreground = getBoolParameter(button.Uid) ? activeBrush : inactiveBrush;
                             }
 
                             foreach (Slider slider in vmSlider)
@@ -105,18 +114,18 @@ namespace VRC_OSC_Handy.VoiceMeeter
                                 textBlock.Text = Math.Round(getParameter(textBlock.Uid.Replace("_Value", "")), 2).ToString();
                             }
                         }
-                        
+
 
                     });
                 Thread.Sleep(50);
             }
-            
+
         }
 
         public void toggleParameter(string parameter)
         {
             vmrApi.GetParameter(parameter, out float val);
-            if(val == 0)
+            if (val == 0)
             {
                 vmrApi.SetParameter(parameter, 1);
             }
@@ -145,7 +154,7 @@ namespace VRC_OSC_Handy.VoiceMeeter
 
         public float getParameter(string parameter)
         {
-            vmrApi.GetParameter(parameter,out float val);
+            vmrApi.GetParameter(parameter, out float val);
             return val;
         }
 
@@ -153,7 +162,7 @@ namespace VRC_OSC_Handy.VoiceMeeter
         {
             bool value;
             vmrApi.GetParameter(parameter, out float val);
-            if(val >= 0.5)
+            if (val >= 0.5)
             {
                 value = true;
             }

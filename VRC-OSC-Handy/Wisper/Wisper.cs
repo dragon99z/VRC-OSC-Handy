@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using VRC_OSC_Handy.Config;
 using VRC_OSC_Handy.Logger;
 using VRC_OSC_Handy.NAudio;
-using VRC_OSC_Handy.Osc;
 using Whisper.net.Ggml;
 
 
@@ -62,7 +57,7 @@ namespace VRC_OSC_Handy.Wis
 
                     });
             }
-                
+
             Thread.Sleep(5000);
             whisper.InitializeWhisper(modelPath, lang, translate); // Path to your model
             whisper.StartRecording();

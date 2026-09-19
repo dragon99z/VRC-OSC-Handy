@@ -1,16 +1,11 @@
-﻿using System;
+﻿using NAudio.Wave;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using NAudio.Utils;
-using NAudio.Wave;
 using VRC_OSC_Handy.Logger;
 using VRC_OSC_Handy.Osc;
-using VRC_OSC_Handy.Wis;
 using Whisper.net;
 using Whisper.net.LibraryLoader;
 
@@ -38,7 +33,7 @@ namespace VRC_OSC_Handy.NAudio
             };
 
             factory = WhisperFactory.FromPath(modelPath);
-            if(translate)
+            if (translate)
                 processor = factory.CreateBuilder()
                 .WithLanguage(lang).WithTranslate()
                 .Build();
@@ -129,30 +124,27 @@ namespace VRC_OSC_Handy.NAudio
 
         public void StopRecording()
         {
-            if (Application.Current != null)
-                Application.Current.Dispatcher.Invoke((Action)delegate
+            Task.Run(() =>
+            {
+                if (waveIn != null)
                 {
-                    Task.Run(() => {
-                        if (waveIn != null)
-                        {
-                            waveIn.StopRecording();
-                        }
+                    waveIn.StopRecording();
+                }
 
-                        Thread.Sleep(chunkDurationMs);
+                Thread.Sleep(chunkDurationMs);
 
-                        if (processor != null)
-                        {
-                            processor.DisposeAsync();
-                            processor = null;
-                        }
+                if (processor != null)
+                {
+                    processor.DisposeAsync().AsTask().GetAwaiter().GetResult(); // wait for the real async dispose instead of firing it and forgetting
+                    processor = null;
+                }
 
-                        if (factory != null)
-                        {
-                            factory.Dispose();
-                            factory = null;
-                        }
-                    });
-                });
+                if (factory != null)
+                {
+                    factory.Dispose();
+                    factory = null;
+                }
+            });
             DebugLogger.Log("Recording stopped.");
         }
 

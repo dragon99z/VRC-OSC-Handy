@@ -1,16 +1,14 @@
-﻿using SpotifyAPI.Web.Auth;
+﻿using CefSharp.Wpf;
+using Newtonsoft.Json;
 using SpotifyAPI.Web;
+using SpotifyAPI.Web.Auth;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Threading;
-using CefSharp.Wpf;
-using System.IO;
 using VRC_OSC_Handy.Logger;
-using VRC_OSC_Handy;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
 
 namespace VRC_OSC_Handy.Auth
 {
@@ -58,7 +56,8 @@ namespace VRC_OSC_Handy.Auth
             }
             else
             {
-                authWindow.Dispatcher.Invoke(() => {
+                authWindow.Dispatcher.Invoke(() =>
+                {
                     authWindow.Show();
                     Thread.Sleep(100);
                     authWindow.AuthBrowser.LoadUrl(request.ToUri().ToString());
@@ -67,7 +66,7 @@ namespace VRC_OSC_Handy.Auth
 
 
 
-            
+
             //BrowserUtil.Open(request.ToUri());
         }
 
@@ -90,10 +89,11 @@ namespace VRC_OSC_Handy.Auth
             }
             else
             {
-                authWindow.Dispatcher.Invoke(() => {
+                authWindow.Dispatcher.Invoke(() =>
+                {
                     authWindow.Close();
                 });
-            }         
+            }
 
             spotify = new SpotifyClient(tokenResponse.AccessToken);
             Application.Current.Dispatcher.Invoke((Action)delegate
@@ -105,7 +105,7 @@ namespace VRC_OSC_Handy.Auth
                 var configJsonString = JsonConvert.SerializeObject(MainWindow.config, Formatting.Indented);
                 File.WriteAllText(MainWindow.cfg_path + "config.json", configJsonString);
             });
-            
+
             // do calls with Spotify and save token?
         }
 
