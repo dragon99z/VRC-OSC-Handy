@@ -5,7 +5,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-blue?logo=windows)](https://github.com/dragon99z/VRC-OSC-Handy)
 [![Framework](https://img.shields.io/badge/.NET-10%20LTS-purple)](https://dotnet.microsoft.com/)
 [![Language](https://img.shields.io/badge/language-C%23-green?logo=csharp)](https://github.com/dragon99z/VRC-OSC-Handy)
-[![License](https://img.shields.io/github/license/dragon99z/VRC-OSC-Handy)](LICENSE)
+[![License](https://img.shields.io/github/license/dragon99z/VRC-OSC-Handy)](https://github.com/dragon99z/VRC-OSC-Handy)
 [![DeepWiki](https://img.shields.io/badge/docs-DeepWiki-orange)](https://deepwiki.com/dragon99z/VRC-OSC-Handy)
 
 ---
@@ -91,40 +91,82 @@ For command-line builds on Windows: `dotnet build VRC-OSC-Handy.sln -c Release -
 
 ## Configuration
 
-VRC-OSC-Handy stores its configuration in your local AppData directory. Two JSON files control its behaviour:
+VRC-OSC-Handy stores its configuration in your local AppData directory (next
+to the executable, under `VRC Handy/`). Two JSON files control its behaviour.
+Both are normally edited through the app's own UI (the Settings panel), which
+writes the files back out for you — you don't need to hand-edit them, though
+you can since they're plain JSON.
 
 ### `config.json` — Application Settings
 
-Stores service credentials and STT preferences:
+Stores Spotify credentials and Whisper STT preferences:
 
 ```json
 {
-  "spotify_client_id": "YOUR_SPOTIFY_CLIENT_ID",
-  "spotify_client_secret": "YOUR_SPOTIFY_CLIENT_SECRET",
-  "stt_model": "base",
-  "stt_language": "en"
+  "SpotifyConfig": {
+    "Enabled": false,
+    "ClientID": "your-client-id",
+    "ClientSecret": "your-client-secret"
+  },
+  "STT": {
+    "Model": 0,
+    "Language": 0,
+    "Translate": false
+  }
 }
 ```
 
 | Key | Description |
 |---|---|
-| `spotify_client_id` | Your Spotify Developer App client ID |
-| `spotify_client_secret` | Your Spotify Developer App client secret |
-| `stt_model` | Whisper GGML model size (`tiny`, `base`, `small`, `medium`, `large`) |
-| `stt_language` | Language code for Whisper transcription (e.g. `en`, `de`, `ja`) |
+| `SpotifyConfig.Enabled` | Whether Spotify integration is turned on |
+| `SpotifyConfig.ClientID` / `ClientSecret` | Your Spotify Developer App credentials — set these from the Settings panel in the app, which unmasks/masks the fields and saves them for you |
+| `STT.Model` | Index into the app's Whisper model dropdown (built from the Whisper.net `GgmlType` list — tiny/base/small/medium/large variants); pick it from the UI rather than guessing the index |
+| `STT.Language` | Index into the app's language dropdown (`auto`, `en`, `zh`, `de`, `es`, `ru`, `ko`, `fr`, `ja`, `pt`, `tr`, `pl`, `ca`, `nl`, and more) |
+| `STT.Translate` | Whether Whisper translates non-English speech to English instead of transcribing it as-is |
+
+On first launch the app copies these defaults out of its embedded resources;
+on every later launch it additively merges in any new keys the bundled
+defaults have gained, without touching or removing values you've already set.
 
 ### `vrc_config.json` — VRChat OSC Parameter Mapping
 
-Maps VRChat avatar OSC parameters to application functions:
+Maps the app's Spotify/VoiceMeeter/OSC state to VRChat avatar parameter and
+chatbox paths. The real schema has a `Spotify` section, an `Other` section
+(clock + STT chatbox toggles), and five `Strip0`–`Strip4` sections — one per
+VoiceMeeter strip, each with the same set of bus/mute/gain parameters:
 
 ```json
 {
-  "parameters": {
-    "MuteToggle": "/avatar/parameters/MuteToggle",
-    "Volume": "/avatar/parameters/Volume"
+  "Spotify": {
+    "Next": "Handy/Spotify/Next",
+    "Last": "Handy/Spotify/Last",
+    "PlayPause": "Handy/Spotify/PlayPause",
+    "Song": "Handy/Spotify/Song",
+    "ProgressBar": "Handy/Spotify/ProgressBar"
+  },
+  "Other": {
+    "Time": "Handy/Other/Time",
+    "STT": "Handy/Other/STT"
+  },
+  "Strip0": {
+    "A1": "Handy/Strip0/A1",
+    "A2": "Handy/Strip0/A2",
+    "A3": "Handy/Strip0/A3",
+    "A4": "Handy/Strip0/A4",
+    "A5": "Handy/Strip0/A5",
+    "B1": "Handy/Strip0/B1",
+    "B2": "Handy/Strip0/B2",
+    "B3": "Handy/Strip0/B3",
+    "Mute": "Handy/Strip0/Mute",
+    "Gain": "Handy/Strip0/Gain"
   }
 }
 ```
+
+`Strip1` through `Strip4` repeat the same `A1`–`A5`/`B1`–`B3`/`Mute`/`Gain`
+shape. The `Strip0..Strip4` split mirrors VoiceMeeter's fixed 5-strip layout
+and is baked into the app's config classes, so it isn't a flexible list —
+rename the target avatar-parameter paths, but don't restructure the strips.
 
 ---
 
@@ -200,9 +242,9 @@ For a full technical deep-dive into each subsystem, see the [DeepWiki documentat
 ## Enabling Spotify
 
 1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and create a new application.
-2. Set the redirect URI to `http://localhost:5000/callback` (or whatever the app instructs on first run).
-3. Copy your **Client ID** and **Client Secret** into `config.json`.
-4. Launch VRC-OSC-Handy and click **Connect Spotify** — an embedded browser window will open for login.
+2. Set the redirect URI to exactly `http://localhost:5656/callback` — the app's embedded auth server is hard-coded to that port, so it must match.
+3. In VRC-OSC-Handy's Settings panel, enter your **Client ID** and **Client Secret** (this saves them into `config.json` for you).
+4. Click **Connect Spotify** — an embedded browser window will open for login.
 
 ---
 
@@ -248,7 +290,7 @@ details before attempting to "fix" this.
 ## Documentation
 
 Full technical documentation is available on **DeepWiki**:
-👉 [https://deepwiki.com/dragon99z/VRC-OSC-Handy](https://deepwiki.com/dragon99z/VRC-OSC-Handy)
+👉 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/dragon99z/VRC-OSC-Handy)
 
 ---
 

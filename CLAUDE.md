@@ -113,11 +113,19 @@ VoiceMeeter native API access, and Whisper CUDA runtimes.
 Direct dependencies are declared with SDK-style `<PackageReference>` entries in
 `VRC-OSC-Handy/VRC-OSC-Handy.csproj`.
 
-The current direct set includes NAudio 2.4.0, SpotifyAPI.Web/Auth 7.4.2,
-Whisper.net 1.9.1 with Windows CPU/CUDA/CUDA12 runtimes, Microsoft.Win32.Registry 5.0.0, Microsoft.Win32.SystemEvents 10.0.12, BuildSoft.OscCore,
-VRCOscLib, EmbedIO, Unosquare.Swan.Lite, Newtonsoft.Json, log4net, and
-CefSharp.Wpf.NETCore 152.0.60. The old Framework-only `a-tg.*` VoiceMeeter
-packages have been replaced by a small in-tree wrapper under `VoiceMeeter/`.
+The current direct set (see the .csproj for exact pins) includes
+BuildSoft.OscCore 1.2.1.1, CefSharp.Wpf.NETCore 152.0.60, EmbedIO 3.5.2,
+log4net 3.4.0, NAudio 2.4.0, Newtonsoft.Json 13.0.4, SpotifyAPI.Web/Auth
+7.4.2, Unosquare.Swan.Lite 3.1.0, VRCOscLib 1.6.0, and Whisper.net 1.9.1 with
+its Windows CPU/CUDA/CUDA12 runtime packages. The old Framework-only `a-tg.*`
+VoiceMeeter packages have been replaced by a small in-tree wrapper under
+`VoiceMeeter/`.
+
+`RemoteControle.cs` uses `Microsoft.Win32.SystemEvents` and
+`VoiceMeeterPathHelper.cs` uses `Microsoft.Win32.Registry`, but neither needs
+a `<PackageReference>`: for a `net10.0-windows` WPF app these come from the
+Windows Desktop shared framework, not NuGet. Don't add explicit package
+references for them.
 
 Do not reintroduce `packages.config`, manual `HintPath` entries, or old-style
 CefSharp package references. For a clean restore, remove `bin/` and `obj/` and
