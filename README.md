@@ -284,15 +284,13 @@ Contributions, bug reports, and feature requests are welcome! Please open an [is
 For architecture notes, build caveats, and rules for AI coding agents working
 in this repo, see [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
 
-### Known limitation
+### VoiceMeeter is optional
 
-VoiceMeeter support is constructed unconditionally at startup and used
-without null checks throughout `MainWindow`'s code (split across several
-`MainWindow.*.cs` partial-class files — see `CLAUDE.md`'s Architecture
-section), despite VoiceMeeter being documented above as optional. Whether
-this actually breaks on a machine without VoiceMeeter installed depends on
-the underlying native wrapper's error behavior and hasn't been confirmed.
-See `AGENTS.md` for details before attempting to "fix" this.
+VoiceMeeter really is optional, as described above: if it isn't installed,
+`MainWindow` catches the startup failure, leaves the VoiceMeeter panel
+showing "Voicemeeter not found!", and the rest of the app (Spotify, Whisper
+STT, OSC) runs normally. See `CLAUDE.md`'s Architecture section for exactly
+which call sites are null-guarded.
 
 ---
 

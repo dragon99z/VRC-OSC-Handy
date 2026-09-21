@@ -335,20 +335,26 @@ namespace VRC_OSC_Handy.Osc
 
         private void SyncParameter(RemoteControle remoteControle, OscAvatarConfig oscAvatar)
         {
-            // VoiceMeeter edition -> how many A/B avatar parameters to sync per strip:
-            // 4 for Standard, 5 for Banana, 6 for anything else (Potato).
-            int buttonsPerStrip = remoteControle.type == 1 ? 4 : remoteControle.type == 2 ? 5 : 6;
-
-            for (int i = 0; i < 5; i++)
+            // remoteControle is null when VoiceMeeter isn't installed (see MainWindow
+            // ctor) - skip the strip sync but still sync the non-VoiceMeeter (Spotify)
+            // state below, same as the null check already used for HandleStripParameter.
+            if (remoteControle != null)
             {
-                for (int j = 0; j < buttonsPerStrip; j++)
-                {
-                    OscParameter.SendAvatarParameter($"Handy/Strip{i}/A{j + 1}", remoteControle.getBoolParameter($"Strip[{i}].A{j + 1}"));
-                    OscParameter.SendAvatarParameter($"Handy/Strip{i}/B{j + 1}", remoteControle.getBoolParameter($"Strip[{i}].B{j + 1}"));
-                }
+                // VoiceMeeter edition -> how many A/B avatar parameters to sync per strip:
+                // 4 for Standard, 5 for Banana, 6 for anything else (Potato).
+                int buttonsPerStrip = remoteControle.type == 1 ? 4 : remoteControle.type == 2 ? 5 : 6;
 
-                OscParameter.SendAvatarParameter($"Handy/Strip{i}/Mute", remoteControle.getBoolParameter($"Strip[{i}].Mute"));
-                OscParameter.SendAvatarParameter($"Handy/Strip{i}/Gain", ReverseTranslateValue(remoteControle.getParameter($"Strip[{i}].Gain")));
+                for (int i = 0; i < 5; i++)
+                {
+                    for (int j = 0; j < buttonsPerStrip; j++)
+                    {
+                        OscParameter.SendAvatarParameter($"Handy/Strip{i}/A{j + 1}", remoteControle.getBoolParameter($"Strip[{i}].A{j + 1}"));
+                        OscParameter.SendAvatarParameter($"Handy/Strip{i}/B{j + 1}", remoteControle.getBoolParameter($"Strip[{i}].B{j + 1}"));
+                    }
+
+                    OscParameter.SendAvatarParameter($"Handy/Strip{i}/Mute", remoteControle.getBoolParameter($"Strip[{i}].Mute"));
+                    OscParameter.SendAvatarParameter($"Handy/Strip{i}/Gain", ReverseTranslateValue(remoteControle.getParameter($"Strip[{i}].Gain")));
+                }
             }
 
             var track = updateSpotify.track;

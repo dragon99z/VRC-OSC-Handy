@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using VRC_OSC_Handy.Auth;
+using VRC_OSC_Handy.Update;
 
 namespace VRC_OSC_Handy
 {

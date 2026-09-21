@@ -97,20 +97,28 @@ namespace VRC_OSC_Handy
         {
             if (!vmEditionLayouts.TryGetValue(type, out VmEditionLayout layout))
             {
-                VM_Controller.Children.Add(new TextBlock
-                {
-                    Text = "Voicemeeter not found!",
-                    Margin = new Thickness(30, 10, 0, 0),
-                    Background = Brushes.Transparent,
-                    Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 0, 0)),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Top,
-                });
+                ShowVoiceMeeterNotFound();
                 return;
             }
 
             for (int stripIndex = 0; stripIndex < layout.StripCount; stripIndex++)
                 BuildVmStrip(stripIndex, layout);
+        }
+
+        // Shared by the "installed but unrecognized edition" case (LoadVMSettings) and
+        // the "not installed at all" case (VM_Controller_Loaded, remoteControle == null
+        // - see MainWindow ctor) so there's one "not found" message instead of two.
+        private void ShowVoiceMeeterNotFound()
+        {
+            VM_Controller.Children.Add(new TextBlock
+            {
+                Text = "Voicemeeter not found!",
+                Margin = new Thickness(30, 10, 0, 0),
+                Background = Brushes.Transparent,
+                Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 0, 0)),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+            });
         }
 
         // Builds one full VoiceMeeter strip panel: header, A-buttons, B-buttons, Mute,
@@ -215,6 +223,15 @@ namespace VRC_OSC_Handy
 
         private void VM_Controller_Loaded(object sender, RoutedEventArgs e)
         {
+            if (remoteControle == null)
+            {
+                // VoiceMeeter isn't installed (see MainWindow ctor) - show the same
+                // message LoadVMSettings uses for an unrecognized edition, and skip
+                // starting the background type-polling loop below entirely.
+                ShowVoiceMeeterNotFound();
+                return;
+            }
+
             vmt = updateVMToken.Token;
             int type = remoteControle.type;
             LoadVMSettings(type);

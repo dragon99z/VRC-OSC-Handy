@@ -97,15 +97,23 @@ files (`MainWindow.ConfigIO.cs`, `MainWindow.VoiceMeeterPanel.cs`,
 - `MainWindow.remoteControle`, `spotify`, `wisper`, `config` etc. are static
   fields shared across the whole app (not DI). This is intentional given the
   app's size; don't introduce a DI container for a one-window app.
-- `RemoteControle` (VoiceMeeter) is constructed unconditionally in
-  `MainWindow`'s constructor, and dozens of call sites across the
-  `MainWindow.*.cs` partial-class files (mostly
-  `MainWindow.VoiceMeeterPanel.cs`) call `remoteControle.getBoolParameter(...)`
-  etc. with no null checks. The README calls VoiceMeeter "optional", but the
-  C# assumes it's always present. The legacy `a-tg.*` NuGet wrappers are now
-  replaced by the in-tree native wrapper in `VoiceMeeter/`, but the
-  optional-installation behavior is still unverified. A partial null-check
-  pass across the many call sites would be a separate deliberate change.
+- `RemoteControle` (VoiceMeeter) is now genuinely optional, matching the
+  README. `MainWindow`'s constructor wraps `new RemoteControle()` in a
+  try/catch and leaves the static `remoteControle` field `null` if
+  construction throws (VoiceMeeter not installed, per
+  `VoiceMeeterPathHelper`'s registry/DLL lookup, or a Remote API login
+  failure) instead of letting the app crash at startup. Every call site is
+  null-guarded: `MainWindow.VoiceMeeterPanel.cs`'s `VM_Controller_Loaded`
+  shows a "Voicemeeter not found!" message and returns before building any
+  VM strip UI or starting the type-polling loop when `remoteControle` is
+  null (so the VM strip controls and their event handlers are simply never
+  created in that case); `Osc/VRCOSC.cs`'s `SyncParameter` skips the
+  VoiceMeeter strip sync but still syncs Spotify state; and
+  `MainWindow.ConfigIO.cs`'s `stopAll()` uses `remoteControle?.LogOut()`.
+  The legacy `a-tg.*` NuGet wrappers are still replaced by the in-tree
+  native wrapper in `VoiceMeeter/`. Keep new `remoteControle` call sites
+  null-guarded rather than reintroducing the unconditional-presence
+  assumption.
 - The `Strip0`..`Strip4` config classes (`Config/VRCParameterConfig.cs`) are
   still five separate C# classes — not a `List<Strip>` — because
   `vrc_config.json` on disk has five separately-named top-level keys
@@ -193,6 +201,13 @@ files (`MainWindow.ConfigIO.cs`, `MainWindow.VoiceMeeterPanel.cs`,
 - `CrashHandler.cs`'s three unhandled-exception handlers each duplicated the
   same log/notify/stop/save/restart sequence. Consolidated into one
   `HandleFatalException` helper.
+- `MainWindow`'s constructor used to call `new RemoteControle()`
+  unconditionally, so a machine without VoiceMeeter installed threw out of
+  the constructor and the app never got past startup, contradicting the
+  README's "VoiceMeeter is optional". The constructor now catches that
+  failure, leaves `remoteControle` `null`, and logs a warning; every read of
+  `remoteControle` elsewhere is null-guarded (see "Known design constraints"
+  above for exactly where).
 
 ## NuGet packages
 

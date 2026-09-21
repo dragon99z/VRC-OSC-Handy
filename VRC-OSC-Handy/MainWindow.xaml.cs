@@ -9,6 +9,7 @@ using System.Windows.Media;
 using VRC_OSC_Handy.Auth;
 using VRC_OSC_Handy.Config;
 using VRC_OSC_Handy.Func;
+using VRC_OSC_Handy.Logger;
 using VRC_OSC_Handy.Osc;
 using VRC_OSC_Handy.Particles;
 using VRC_OSC_Handy.Update;
@@ -49,9 +50,6 @@ namespace VRC_OSC_Handy
 
         public static string modelPath = @"models\Base.bin";
 
-        private bool _updatingSpotifyClientID;
-        private bool _updatingSpotifyClientSecret;
-
         private const string SpotifyClientIDPlaceholder = "your-client-id";
         private const string SpotifyClientSecretPlaceholder = "your-client-secret";
 
@@ -74,7 +72,21 @@ namespace VRC_OSC_Handy
             genConfig("config.json", out configJson);
             config = configJson.ToObject<InterfaceConfig>();
 
-            remoteControle = new RemoteControle();
+            try
+            {
+                remoteControle = new RemoteControle();
+            }
+            catch (Exception ex)
+            {
+                // VoiceMeeter is documented as optional (see README). The native wrapper
+                // throws when it isn't installed (registry/DLL lookup in
+                // VoiceMeeterPathHelper) or when the Remote API login fails, so treat
+                // that as "not available" instead of letting it take the whole app down.
+                // Every call site that reads remoteControle is null-guarded to degrade
+                // to "Voicemeeter not found!" UI / a no-op instead.
+                remoteControle = null;
+                DebugLogger.LogWarning($"VoiceMeeter unavailable, continuing without it: {ex.Message}");
+            }
             wisper = new Wisper();
             InitializeComponent();
             this.Icon = ByteImageConverter.ByteToImage(Properties.Resources.image);

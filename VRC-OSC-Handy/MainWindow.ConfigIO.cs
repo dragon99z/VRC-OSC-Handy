@@ -77,7 +77,7 @@ namespace VRC_OSC_Handy
 
             updateToken.Cancel();
             updateVMToken.Cancel();
-            remoteControle.LogOut();
+            remoteControle?.LogOut(); // null when VoiceMeeter isn't installed (see MainWindow ctor)
             if (wisper.isRunning)
                 wisper.stop();
 

@@ -60,17 +60,34 @@ architectural walkthrough; this file is the quick operational contract.
 3. Any UI mutation from a non-UI thread must go through
    `Dispatcher.CheckAccess()`/`Invoke` — this is not optional, WPF will throw.
 
-## Known unresolved gap (do not silently "fix")
+## VoiceMeeter is now genuinely optional (previously an unresolved gap)
 
-`RemoteControle` (VoiceMeeter) is constructed unconditionally and used
-without null checks throughout `MainWindow`'s code (split across several
-`MainWindow.*.cs` partial-class files), even though the README describes
-VoiceMeeter as optional. The legacy `a-tg.*` NuGet wrappers are no longer
-used; the modern project contains a small native wrapper in
-`VoiceMeeter/VoiceMeeterRemoteApi.cs`. The optional-installation behavior is
-still not guaranteed, because the UI assumes the VoiceMeeter backend is
-available. If asked to make VoiceMeeter truly optional, treat it as a larger
-change (null-guards plus UI changes), not a quick dependency fix.
+`MainWindow`'s constructor wraps `remoteControle = new RemoteControle()` in a
+try/catch: `RemoteControle`'s constructor throws when VoiceMeeter isn't
+installed (`VoiceMeeterPathHelper`'s registry/DLL lookup) or when the Remote
+API login fails, and the catch leaves `MainWindow.remoteControle` `null`
+instead of letting that exception take down the whole app at startup. Every
+call site that reads `remoteControle` is null-guarded to degrade gracefully
+instead of throwing:
+
+- `MainWindow.VoiceMeeterPanel.cs`'s `VM_Controller_Loaded` shows the same
+  "Voicemeeter not found!" message `LoadVMSettings` already used for an
+  unrecognized edition (factored into a shared `ShowVoiceMeeterNotFound()`
+  helper) and returns before touching `remoteControle` or starting the
+  background type-polling `Task`. The VM strip UI (`BuildVmStrip`/
+  `AddVmToggleButton`) and its event handlers (`vmValueChange`/`vmToggle`)
+  are therefore only ever reachable when `remoteControle` is non-null,
+  because they're only wired up from inside that same guarded path.
+- `Osc/VRCOSC.cs`'s `SyncParameter` skips the VoiceMeeter strip sync when
+  `remoteControle` is null but still syncs Spotify state, matching the
+  existing `remoteControle != null` guard already used for
+  `HandleStripParameter`.
+- `MainWindow.ConfigIO.cs`'s `stopAll()` calls `remoteControle?.LogOut()`.
+
+If you touch any of these call sites again, keep them null-safe rather than
+reverting to the old unconditional-VoiceMeeter assumption. The legacy
+`a-tg.*` NuGet wrappers are still not used; the modern project's native
+wrapper stays in `VoiceMeeter/VoiceMeeterRemoteApi.cs`.
 
 ## Already-fixed issues (don't reintroduce)
 
