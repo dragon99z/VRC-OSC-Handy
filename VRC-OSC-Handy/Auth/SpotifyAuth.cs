@@ -43,29 +43,20 @@ namespace VRC_OSC_Handy.Auth
                 Scope = new List<string> { Scopes.UserReadEmail, Scopes.AppRemoteControl, Scopes.Streaming, Scopes.UserReadPlaybackState, Scopes.UserReadCurrentlyPlaying, Scopes.UserModifyPlaybackState }
             };
 
-            var uiAccess = authWindow.Dispatcher.CheckAccess();
-
             var settings = new CefSettings();
             settings.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\Cache");
 
-            if (uiAccess)
+            void ShowAuthWindow()
             {
                 authWindow.Show();
                 Thread.Sleep(100);
                 authWindow.AuthBrowser.LoadUrl(request.ToUri().ToString());
             }
+
+            if (authWindow.Dispatcher.CheckAccess())
+                ShowAuthWindow();
             else
-            {
-                authWindow.Dispatcher.Invoke(() =>
-                {
-                    authWindow.Show();
-                    Thread.Sleep(100);
-                    authWindow.AuthBrowser.LoadUrl(request.ToUri().ToString());
-                });
-            }
-
-
-
+                authWindow.Dispatcher.Invoke(ShowAuthWindow);
 
             //BrowserUtil.Open(request.ToUri());
         }
@@ -81,19 +72,10 @@ namespace VRC_OSC_Handy.Auth
               )
             );
 
-            var uiAccess = authWindow.Dispatcher.CheckAccess();
-
-            if (uiAccess)
-            {
+            if (authWindow.Dispatcher.CheckAccess())
                 authWindow.Close();
-            }
             else
-            {
-                authWindow.Dispatcher.Invoke(() =>
-                {
-                    authWindow.Close();
-                });
-            }
+                authWindow.Dispatcher.Invoke(authWindow.Close);
 
             spotify = new SpotifyClient(tokenResponse.AccessToken);
             Application.Current.Dispatcher.Invoke((Action)delegate

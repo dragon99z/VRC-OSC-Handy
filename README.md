@@ -87,6 +87,9 @@ Build the solution and run the executable. On first launch, the application will
 
 For command-line builds on Windows: `dotnet build VRC-OSC-Handy.sln -c Release -p:Platform=x64`.
 
+A small xunit test project (`VRC-OSC-Handy.Tests/`) covering pure helper
+logic is included in the solution: `dotnet test VRC-OSC-Handy.sln -p:Platform=x64`.
+
 ---
 
 ## Configuration
@@ -214,6 +217,11 @@ The application is structured around a central `MainWindow` orchestration layer 
 
 For a full technical deep-dive into each subsystem, see the [DeepWiki documentation](https://deepwiki.com/dragon99z/VRC-OSC-Handy).
 
+`MainWindow`'s C# is split across several `MainWindow.*.cs` partial-class
+files by responsibility (config I/O, the VoiceMeeter panel, the parameter
+editor popup, Spotify settings, STT settings) rather than one large file —
+see `CLAUDE.md`'s Architecture section for exactly what lives where.
+
 | Wiki Page | Description |
 |---|---|
 | [Overview](https://deepwiki.com/dragon99z/VRC-OSC-Handy/1-overview) | High-level architecture and component relationships |
@@ -279,11 +287,12 @@ in this repo, see [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
 ### Known limitation
 
 VoiceMeeter support is constructed unconditionally at startup and used
-without null checks throughout `MainWindow.xaml.cs`, despite VoiceMeeter
-being documented above as optional. Whether this actually breaks on a
-machine without VoiceMeeter installed depends on the underlying native
-wrapper's error behavior and hasn't been confirmed. See `AGENTS.md` for
-details before attempting to "fix" this.
+without null checks throughout `MainWindow`'s code (split across several
+`MainWindow.*.cs` partial-class files — see `CLAUDE.md`'s Architecture
+section), despite VoiceMeeter being documented above as optional. Whether
+this actually breaks on a machine without VoiceMeeter installed depends on
+the underlying native wrapper's error behavior and hasn't been confirmed.
+See `AGENTS.md` for details before attempting to "fix" this.
 
 ---
 

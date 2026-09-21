@@ -25,22 +25,31 @@ namespace VRC_OSC_Handy.Update
 
                 if (track?.Item != null) // Item is null during ads/private sessions
                 {
-                    switch (track.Item.Type)
+                    int? durationMs = GetDurationMs(track);
+                    if (durationMs.HasValue)
                     {
-                        case ItemType.Track:
-                            FullTrack fullTrack = (FullTrack)track.Item;
-                            double persentTrack = track.ProgressMs / (double)fullTrack.DurationMs * 100;
-                            setProgess(bar, (persentTrack / 100) * MainWindow.songTextWidth);
-                            break;
-                        case ItemType.Episode:
-                            FullEpisode fullEpisod = (FullEpisode)track.Item;
-                            double persentEpisod = track.ProgressMs / (double)fullEpisod.DurationMs * 100;
-                            setProgess(bar, (persentEpisod / 100) * MainWindow.songTextWidth);
-                            break;
+                        double percent = track.ProgressMs / (double)durationMs.Value * 100;
+                        setProgess(bar, (percent / 100) * MainWindow.songTextWidth);
                     }
                 }
 
                 Thread.Sleep(100);
+            }
+        }
+
+        // Track and Episode both just need a duration - the only difference is which
+        // Spotify type they're cast from. Null for anything else (there isn't a third
+        // case today, same as the old switch with no default case).
+        private static int? GetDurationMs(CurrentlyPlayingContext track)
+        {
+            switch (track.Item.Type)
+            {
+                case ItemType.Track:
+                    return ((FullTrack)track.Item).DurationMs;
+                case ItemType.Episode:
+                    return ((FullEpisode)track.Item).DurationMs;
+                default:
+                    return null;
             }
         }
 

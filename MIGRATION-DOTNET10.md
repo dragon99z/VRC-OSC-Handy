@@ -7,8 +7,11 @@ project format to an SDK-style WPF application targeting `.NET 10`
 ## Project format
 
 - `VRC-OSC-Handy.csproj` is now SDK-style.
-- `packages.config` has been removed.
-- NuGet dependencies use `<PackageReference>`.
+- `packages.config` is no longer used for restore — NuGet dependencies use
+  `<PackageReference>` instead. A stale `VRC-OSC-Handy/packages.config` file
+  is still checked into the repo (last touched incidentally by the commit
+  that added the test project); the SDK-style project ignores it, but it
+  should be deleted rather than left as a misleading leftover.
 - The old manual `HintPath` references to Framework/`packages/` assemblies are gone.
 - The obsolete `App.config` binding redirects were removed; modern .NET uses the
   generated runtime configuration instead.

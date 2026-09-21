@@ -1,7 +1,6 @@
 ﻿using AtgDev.Voicemeeter;
 using AtgDev.Voicemeeter.Utils;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -76,42 +75,29 @@ namespace VRC_OSC_Handy.VoiceMeeter
                         if (Application.Current.MainWindow != null)
                         {
                             MainWindow mainWindow = (MainWindow)Application.Current.MainWindow;
-                            List<Button> vmButtons = new List<Button>();
-                            List<Slider> vmSlider = new List<Slider>();
-                            List<TextBlock> vmTextBlock = new List<TextBlock>();
-                            foreach (var child in mainWindow.VM_Controller.Children)
-                            {
-                                if (child is Button)
-                                {
-                                    vmButtons.Add(child as Button);
-                                }
-                                else if (child is Slider)
-                                {
-                                    vmSlider.Add(child as Slider);
-                                }
-                                else if (child is TextBlock)
-                                {
-                                    TextBlock textBox = (TextBlock)child;
-                                    if (textBox.Uid.Contains(".Gain_Value"))
-                                        vmTextBlock.Add(child as TextBlock);
-                                }
-                            }
 
-                            foreach (Button button in vmButtons)
+                            // Every VoiceMeeter control refreshes itself from its own Uid, so a
+                            // single pass over the panel's children is enough - no need to sort
+                            // them into three lists first and loop three times.
+                            foreach (UIElement child in mainWindow.VM_Controller.Children)
                             {
-                                button.Foreground = getBoolParameter(button.Uid) ? activeBrush : inactiveBrush;
-                            }
+                                switch (child)
+                                {
+                                    case Button button:
+                                        button.Foreground = getBoolParameter(button.Uid) ? activeBrush : inactiveBrush;
+                                        break;
 
-                            foreach (Slider slider in vmSlider)
-                            {
-                                slider.ValueChanged -= mainWindow.vmValueChange;
-                                slider.Value = getParameter(slider.Uid);
-                                slider.ValueChanged += mainWindow.vmValueChange;
-                            }
+                                    case Slider slider:
+                                        slider.ValueChanged -= mainWindow.vmValueChange;
+                                        slider.Value = getParameter(slider.Uid);
+                                        slider.ValueChanged += mainWindow.vmValueChange;
+                                        break;
 
-                            foreach (TextBlock textBlock in vmTextBlock)
-                            {
-                                textBlock.Text = Math.Round(getParameter(textBlock.Uid.Replace("_Value", "")), 2).ToString();
+                                    case TextBlock gainValueLabel when gainValueLabel.Uid.Contains(".Gain_Value"):
+                                        string gainUid = gainValueLabel.Uid.Replace("_Value", "");
+                                        gainValueLabel.Text = Math.Round(getParameter(gainUid), 2).ToString();
+                                        break;
+                                }
                             }
                         }
 
@@ -160,17 +146,8 @@ namespace VRC_OSC_Handy.VoiceMeeter
 
         public bool getBoolParameter(string parameter)
         {
-            bool value;
             vmrApi.GetParameter(parameter, out float val);
-            if (val >= 0.5)
-            {
-                value = true;
-            }
-            else
-            {
-                value = false;
-            }
-            return value;
+            return val >= 0.5;
         }
 
         public void LogOut()

@@ -45,18 +45,21 @@ namespace AtgDev.Voicemeeter.Utils
             if (!string.IsNullOrWhiteSpace(path))
                 return path;
 
-            string registryPath = RegistryHead + RegistryTail;
-            object result = Registry.GetValue(registryPath, UninstallValueName, null);
-            if (result is string uninstallString && !string.IsNullOrWhiteSpace(uninstallString))
-                return Path.GetDirectoryName(uninstallString) ?? throw new DirectoryNotFoundException("Unable to determine the VoiceMeeter install folder.");
+            string[] registryPaths =
+            {
+                RegistryHead + RegistryTail,
+                RegistryHead + RegistryWow6432Node + RegistryTail,
+            };
 
-            registryPath = RegistryHead + RegistryWow6432Node + RegistryTail;
-            result = Registry.GetValue(registryPath, UninstallValueName, null);
-            if (result is string wowUninstallString && !string.IsNullOrWhiteSpace(wowUninstallString))
-                return Path.GetDirectoryName(wowUninstallString) ?? throw new DirectoryNotFoundException("Unable to determine the VoiceMeeter install folder.");
+            foreach (string registryPath in registryPaths)
+            {
+                object result = Registry.GetValue(registryPath, UninstallValueName, null);
+                if (result is string uninstallString && !string.IsNullOrWhiteSpace(uninstallString))
+                    return Path.GetDirectoryName(uninstallString) ?? throw new DirectoryNotFoundException("Unable to determine the VoiceMeeter install folder.");
+            }
 
             throw new DirectoryNotFoundException(
-                $"Unable to locate VoiceMeeter. Registry path checked: {registryPath}");
+                $"Unable to locate VoiceMeeter. Registry paths checked: {string.Join(", ", registryPaths)}");
         }
 
         public static string GetDllPath()

@@ -52,68 +52,37 @@ namespace VRC_OSC_Handy.Update
 
         public void WriteSong(TextBlock Song, string song)
         {
-            var uiAccess = Song.Dispatcher.CheckAccess();
-
-            if (uiAccess)
+            void UpdateSongText()
             {
                 Song.Text = song;
-                if (song.Length > 30)
-                    Song.FontSize = 12;
-                else
-                    Song.FontSize = 18;
+                Song.FontSize = song.Length > 30 ? 12 : 18;
                 MainWindow.songTextWidth = Song.ActualWidth;
             }
-            else
-            {
-                Song.Dispatcher.Invoke(() =>
-                {
-                    Song.Text = song;
-                    if (song.Length > 30)
-                        Song.FontSize = 12;
-                    else
-                        Song.FontSize = 18;
-                    MainWindow.songTextWidth = Song.ActualWidth;
-                });
-            }
 
+            if (Song.Dispatcher.CheckAccess())
+                UpdateSongText();
+            else
+                Song.Dispatcher.Invoke(UpdateSongText);
         }
 
         public void ChangeIconEasterEgg(List<SimpleArtist> artists, ImageSource Icon)
         {
-
-            bool uiAccess = (Application.Current != null);
-
-            if (!uiAccess)
+            if (Application.Current == null)
                 return;
 
-            foreach (SimpleArtist artist in artists)
+            // Only one artist ID triggers the easter egg icon; everything else gets the
+            // normal icon. Decide once instead of dispatching a UI update per artist in
+            // the loop, which used to flip the window icon back and forth while scanning
+            // a multi-artist track.
+            bool isEasterEggArtist = artists.Exists(artist => artist.Id == "6mEQK9m2krja6X1cfsAjfl");
+            ImageSource targetIcon = isEasterEggArtist ? ado : image;
+
+            Application.Current.Dispatcher.Invoke((Action)delegate
             {
-                if (artist.Id == "6mEQK9m2krja6X1cfsAjfl")
-                {
-                    Application.Current.Dispatcher.Invoke((Action)delegate
-                    {
-                        MainWindow mainWindow = (MainWindow)Application.Current.MainWindow;
-                        if (mainWindow.Icon != ado)
-                            mainWindow.Icon = ado;
-
-                    });
-                    break;
-                }
-                else
-                {
-                    Application.Current.Dispatcher.Invoke((Action)delegate
-                    {
-                        MainWindow mainWindow = (MainWindow)Application.Current.MainWindow;
-                        if (mainWindow.Icon != image)
-                            mainWindow.Icon = image;
-
-                    });
-                }
-
-            }
-
-
-
+                MainWindow mainWindow = (MainWindow)Application.Current.MainWindow;
+                if (mainWindow.Icon != targetIcon)
+                    mainWindow.Icon = targetIcon;
+            });
         }
 
         public void stop()

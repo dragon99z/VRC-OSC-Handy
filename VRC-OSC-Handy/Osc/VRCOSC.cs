@@ -45,115 +45,35 @@ namespace VRC_OSC_Handy.Osc
             if (avatarConfig == null)
                 avatarConfig = await OscAvatarConfig.WaitAndCreateAtCurrentAsync();
 
+            // Every "Handy/..." avatar parameter change lands here. The parameter's OSC
+            // path after "Handy/" tells us which of three unrelated things changed - a
+            // VoiceMeeter strip control, a Spotify control, or a misc "Other" control -
+            // so this just logs the change, refreshes a few fields from MainWindow, and
+            // dispatches to the one handler that actually knows what to do with it.
             OscAvatarParameterChangedEventHandler handler = async (parameter, e) =>
             {
-                if (parameter.Name.Contains("Handy"))
-                {
-                    DateTime now = DateTime.Now;
-                    DebugLogger.Log($"[{now.ToShortDateString()} {now.ToShortTimeString()}] " +
-                        $"{parameter.Name}: {e.OldValue} => {e.NewValue}");
-                    if (Application.Current != null)
-                        Application.Current.Dispatcher.Invoke((Action)delegate
-                        {
-                            spotify = MainWindow.spotify;
-                            wisper = MainWindow.wisper;
-                            modelPath = MainWindow.modelPath;
+                if (!parameter.Name.Contains("Handy"))
+                    return;
 
-                        });
-                    string[] param = parameter.Name.Remove(0, 6).Split('/');
-                    if (parameter.Name.Contains("Strip") && remoteControle != null && remoteControle.type > 0)
+                DateTime now = DateTime.Now;
+                DebugLogger.Log($"[{now.ToShortDateString()} {now.ToShortTimeString()}] " +
+                    $"{parameter.Name}: {e.OldValue} => {e.NewValue}");
+                if (Application.Current != null)
+                    Application.Current.Dispatcher.Invoke((Action)delegate
                     {
-                        param[0] = AddSquareBrackets(param[0]);
-                        if (param[1].Equals("Gain"))
-                        {
-                            remoteControle.changeParameter(param[0] + "." + param[1], TranslateValue((float)e.NewValue));
-                        }
-                        else
-                        {
-                            remoteControle.toggleBoolParameter(param[0] + "." + param[1], e.NewValue.ToBoolean());
-                        }
-                    }
-                    else if (param[0].Equals("Spotify") && spotify != null)
-                    {
-                        try
-                        {
-                            var track = updateSpotify.track;
-                            if (track != null)
-                            {
-                                switch (param[1])
-                                {
-                                    case "Next":
-                                        if ((bool)e.NewValue)
-                                        {
-                                            if (track.IsPlaying)
-                                            {
-                                                spotify.Player.SkipNext().GetAwaiter().GetResult();
-                                            }
-                                        }
-                                        break;
-                                    case "Last":
-                                        if ((bool)e.NewValue)
-                                        {
-                                            if (track.IsPlaying)
-                                            {
-                                                spotify.Player.SkipPrevious().GetAwaiter().GetResult();
-                                            }
-                                        }
+                        spotify = MainWindow.spotify;
+                        wisper = MainWindow.wisper;
+                        modelPath = MainWindow.modelPath;
+                    });
 
-                                        break;
-                                    case "PlayPause":
-                                        if (!track.IsPlaying && (bool)e.NewValue)
-                                        {
-                                            spotify.Player.ResumePlayback().GetAwaiter().GetResult();
-                                        }
-                                        else if (track.IsPlaying && !(bool)e.NewValue)
-                                        {
-                                            spotify.Player.PausePlayback().GetAwaiter().GetResult();
-                                        }
-                                        break;
-                                    case "Song":
-                                        song = (bool)e.NewValue;
-                                        break;
-                                    case "ProgressBar":
-                                        progress = (bool)e.NewValue;
-                                        break;
-                                }
-                            }
-                        }
-                        catch (APITooManyRequestsException ex)
-                        {
-                            Thread.Sleep(sleep);
-                            sleep += 5000;
-                        }
+                string[] param = parameter.Name.Remove(0, 6).Split('/');
 
-
-                    }
-                    else if (param[0].Equals("Other"))
-                    {
-                        switch (param[1])
-                        {
-                            case "Time":
-                                time = (bool)e.NewValue;
-                                break;
-                            case "STT":
-                                if(wisper.isRunning != (bool)e.NewValue)
-                                {
-                                    if ((bool)e.NewValue)
-                                    {
-                                        wisper.start(modelPath, MicrophoneCapture.LANGUAGES.Keys.ElementAt(MainWindow.config.STT.Language), MainWindow.config.STT.Translate);
-                                        stt = true;
-                                    }
-                                    else
-                                    {
-                                        wisper.stop();
-                                        stt = false;
-                                    }
-                                        
-                                }
-                                break;
-                        }
-                    }
-                }
+                if (parameter.Name.Contains("Strip") && remoteControle != null && remoteControle.type > 0)
+                    HandleStripParameter(remoteControle, param, e.NewValue);
+                else if (param[0].Equals("Spotify") && spotify != null)
+                    HandleSpotifyParameter(spotify, param[1], e.NewValue);
+                else if (param[0].Equals("Other"))
+                    HandleOtherParameter(wisper, modelPath, param[1], e.NewValue);
             };
 
             OscAvatarUtility.AvatarChanged += (sender, e) =>
@@ -176,6 +96,84 @@ namespace VRC_OSC_Handy.Osc
             };
         }
 
+        private void HandleStripParameter(RemoteControle remoteControle, string[] param, object newValue)
+        {
+            string stripPath = AddSquareBrackets(param[0]);
+            string paramName = param[1];
+            string fullParam = $"{stripPath}.{paramName}";
+
+            if (paramName.Equals("Gain"))
+                remoteControle.changeParameter(fullParam, TranslateValue((float)newValue));
+            else
+                remoteControle.toggleBoolParameter(fullParam, newValue.ToBoolean());
+        }
+
+        private void HandleSpotifyParameter(SpotifyClient spotify, string paramName, object newValue)
+        {
+            try
+            {
+                var track = updateSpotify.track;
+                if (track == null)
+                    return;
+
+                switch (paramName)
+                {
+                    case "Next":
+                        if ((bool)newValue && track.IsPlaying)
+                            spotify.Player.SkipNext().GetAwaiter().GetResult();
+                        break;
+                    case "Last":
+                        if ((bool)newValue && track.IsPlaying)
+                            spotify.Player.SkipPrevious().GetAwaiter().GetResult();
+                        break;
+                    case "PlayPause":
+                        if (!track.IsPlaying && (bool)newValue)
+                            spotify.Player.ResumePlayback().GetAwaiter().GetResult();
+                        else if (track.IsPlaying && !(bool)newValue)
+                            spotify.Player.PausePlayback().GetAwaiter().GetResult();
+                        break;
+                    case "Song":
+                        song = (bool)newValue;
+                        break;
+                    case "ProgressBar":
+                        progress = (bool)newValue;
+                        break;
+                }
+            }
+            catch (APITooManyRequestsException)
+            {
+                Thread.Sleep(sleep);
+                sleep += 5000;
+            }
+        }
+
+        private void HandleOtherParameter(Wisper wisper, string modelPath, string paramName, object newValue)
+        {
+            switch (paramName)
+            {
+                case "Time":
+                    time = (bool)newValue;
+                    break;
+
+                case "STT":
+                    bool enableStt = (bool)newValue;
+                    if (wisper.isRunning == enableStt)
+                        break;
+
+                    if (enableStt)
+                    {
+                        wisper.start(modelPath, MicrophoneCapture.LANGUAGES.Keys.ElementAt(MainWindow.config.STT.Language), MainWindow.config.STT.Translate);
+                        stt = true;
+                    }
+                    else
+                    {
+                        wisper.stop();
+                        stt = false;
+                    }
+                    break;
+            }
+        }
+
         public void stop()
         {
             ChatToken.Cancel();
@@ -194,60 +192,32 @@ namespace VRC_OSC_Handy.Osc
                 if (track?.Item != null) // Item is null during ads/private sessions
                 {
                     string msg = "";
+
+                    // Track and Episode both just need a name + duration - the only
+                    // difference is which Spotify type they're cast from - so both
+                    // song/progress sections below read from this instead of switching
+                    // on track.Item.Type themselves.
+                    (string name, int durationMs) = GetPlayingItemInfo(track);
+                    bool isKnownItemType = name != null;
+
                     if (song)
                     {
                         running = true;
-                        switch (track.Item.Type)
-                        {
-                            case ItemType.Track:
-                                FullTrack fullTrack = (FullTrack)track.Item;
-                                if (track.IsPlaying)
-                                    msg += "-Playing: " + fullTrack.Name + "-\n";
-                                else
-                                    msg += "-Paused-\n";
-
-                                break;
-                            case ItemType.Episode:
-                                FullEpisode fullEpisod = (FullEpisode)track.Item;
-                                if (track.IsPlaying)
-                                    msg += "-Playing: " + fullEpisod.Name + "-\n";
-                                else
-                                    msg += "-Paused-\n";
-                                break;
-                        }
+                        if (isKnownItemType)
+                            msg += track.IsPlaying ? $"-Playing: {name}-\n" : "-Paused-\n";
                     }
 
                     if (progress)
                     {
                         running = true;
-                        switch (track.Item.Type)
+                        if (isKnownItemType && track.IsPlaying)
                         {
-                            case ItemType.Track:
-                                FullTrack fullTrack = (FullTrack)track.Item;
-                                if (track.IsPlaying)
-                                {
-                                    msg += (GenerateProgressBar(track.ProgressMs, fullTrack.DurationMs, 15) + "\n");
-                                    TimeSpan progressT = TimeSpan.FromMilliseconds(track.ProgressMs);
-                                    TimeSpan durationT = TimeSpan.FromMilliseconds(fullTrack.DurationMs);
-                                    string progressTime = string.Format("{0:D2}m:{1:D2}s", progressT.Minutes, progressT.Seconds);
-                                    string durationTime = string.Format("{0:D2}m:{1:D2}s", durationT.Minutes, durationT.Seconds);
-                                    msg += (progressTime + " / " + durationTime + "\n");
-                                }
-                                    
-                                    
-                                break;
-                            case ItemType.Episode:
-                                FullEpisode fullEpisod = (FullEpisode)track.Item;
-                                if (track.IsPlaying)
-                                {
-                                    msg += (GenerateProgressBar(track.ProgressMs, fullEpisod.DurationMs, 15) + "\n");
-                                    TimeSpan progressT = TimeSpan.FromMilliseconds(track.ProgressMs);
-                                    TimeSpan durationT = TimeSpan.FromMilliseconds(fullEpisod.DurationMs);
-                                    string progressTime = string.Format("{0:D2}m:{1:D2}s", progressT.Minutes, progressT.Seconds);
-                                    string durationTime = string.Format("{0:D2}m:{1:D2}s", durationT.Minutes, durationT.Seconds);
-                                    msg += (progressTime + " / " + durationTime + "\n");
-                                }
-                                break;
+                            msg += GenerateProgressBar(track.ProgressMs, durationMs, 15) + "\n";
+                            TimeSpan progressT = TimeSpan.FromMilliseconds(track.ProgressMs);
+                            TimeSpan durationT = TimeSpan.FromMilliseconds(durationMs);
+                            string progressTime = string.Format("{0:D2}m:{1:D2}s", progressT.Minutes, progressT.Seconds);
+                            string durationTime = string.Format("{0:D2}m:{1:D2}s", durationT.Minutes, durationT.Seconds);
+                            msg += progressTime + " / " + durationTime + "\n";
                         }
                     }
 
@@ -289,6 +259,26 @@ namespace VRC_OSC_Handy.Osc
                         OscChatbox.SendMessage(msg, direct: true);
                 }
                 Thread.Sleep(1500);
+            }
+        }
+
+        // Spotify reports the currently playing item as either a FullTrack or a
+        // FullEpisode - different types, but UpdateChat only ever needs their name and
+        // duration. Returns (null, 0) for anything else (there isn't a third case today,
+        // but this keeps that path silent instead of throwing, same as the old switch
+        // with no default case).
+        private static (string Name, int DurationMs) GetPlayingItemInfo(CurrentlyPlayingContext track)
+        {
+            switch (track.Item.Type)
+            {
+                case ItemType.Track:
+                    FullTrack fullTrack = (FullTrack)track.Item;
+                    return (fullTrack.Name, fullTrack.DurationMs);
+                case ItemType.Episode:
+                    FullEpisode fullEpisode = (FullEpisode)track.Item;
+                    return (fullEpisode.Name, fullEpisode.DurationMs);
+                default:
+                    return (null, 0);
             }
         }
 
@@ -345,10 +335,13 @@ namespace VRC_OSC_Handy.Osc
 
         private void SyncParameter(RemoteControle remoteControle, OscAvatarConfig oscAvatar)
         {
+            // VoiceMeeter edition -> how many A/B avatar parameters to sync per strip:
+            // 4 for Standard, 5 for Banana, 6 for anything else (Potato).
+            int buttonsPerStrip = remoteControle.type == 1 ? 4 : remoteControle.type == 2 ? 5 : 6;
 
             for (int i = 0; i < 5; i++)
             {
-                for (int j = 0; j < (remoteControle.type == 1 ? 4 : remoteControle.type == 2 ? 5 : 6); j++)
+                for (int j = 0; j < buttonsPerStrip; j++)
                 {
                     OscParameter.SendAvatarParameter($"Handy/Strip{i}/A{j + 1}", remoteControle.getBoolParameter($"Strip[{i}].A{j + 1}"));
                     OscParameter.SendAvatarParameter($"Handy/Strip{i}/B{j + 1}", remoteControle.getBoolParameter($"Strip[{i}].B{j + 1}"));

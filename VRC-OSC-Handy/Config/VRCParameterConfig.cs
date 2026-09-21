@@ -26,7 +26,12 @@
         public string ProgressBar { get; set; }
     }
 
-    public class Strip0
+    // Strip0..Strip4 are five separate classes - rather than one Strip type in a list
+    // or dictionary - purely so each one serializes to its own named JSON property
+    // ("Strip0": {...}, "Strip1": {...}, ...) in vrc_config.json. Collapsing them into
+    // a collection would change that shape and break every existing user's saved
+    // config file, so instead they just share their field list via this base class.
+    public class Strip
     {
         public string A1 { get; set; }
         public string A2 { get; set; }
@@ -40,59 +45,9 @@
         public string Gain { get; set; }
     }
 
-    public class Strip1
-    {
-        public string A1 { get; set; }
-        public string A2 { get; set; }
-        public string A3 { get; set; }
-        public string A4 { get; set; }
-        public string A5 { get; set; }
-        public string B1 { get; set; }
-        public string B2 { get; set; }
-        public string B3 { get; set; }
-        public string Mute { get; set; }
-        public string Gain { get; set; }
-    }
-
-    public class Strip2
-    {
-        public string A1 { get; set; }
-        public string A2 { get; set; }
-        public string A3 { get; set; }
-        public string A4 { get; set; }
-        public string A5 { get; set; }
-        public string B1 { get; set; }
-        public string B2 { get; set; }
-        public string B3 { get; set; }
-        public string Mute { get; set; }
-        public string Gain { get; set; }
-    }
-
-    public class Strip3
-    {
-        public string A1 { get; set; }
-        public string A2 { get; set; }
-        public string A3 { get; set; }
-        public string A4 { get; set; }
-        public string A5 { get; set; }
-        public string B1 { get; set; }
-        public string B2 { get; set; }
-        public string B3 { get; set; }
-        public string Mute { get; set; }
-        public string Gain { get; set; }
-    }
-
-    public class Strip4
-    {
-        public string A1 { get; set; }
-        public string A2 { get; set; }
-        public string A3 { get; set; }
-        public string A4 { get; set; }
-        public string A5 { get; set; }
-        public string B1 { get; set; }
-        public string B2 { get; set; }
-        public string B3 { get; set; }
-        public string Mute { get; set; }
-        public string Gain { get; set; }
-    }
+    public class Strip0 : Strip { }
+    public class Strip1 : Strip { }
+    public class Strip2 : Strip { }
+    public class Strip3 : Strip { }
+    public class Strip4 : Strip { }
 }

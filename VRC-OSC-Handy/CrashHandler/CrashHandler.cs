@@ -24,38 +24,31 @@ namespace VRC_OSC_Handy.CrashHandler
 
         private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            LogException("UI Thread Exception", e.Exception);
-            MessageBox.Show($"An unexpected error occurred:\n\n{e.Exception.Message}", "Application Error", MessageBoxButton.OK, MessageBoxImage.Error);
-
+            HandleFatalException("UI Thread Exception", e.Exception, "Application Error",
+                $"An unexpected error occurred:\n\n{e.Exception.Message}", MessageBoxImage.Error);
             e.Handled = true;
-
-            MainWindow.stopAll();
-            MainWindow.saveAll();
-
-            if (_autoRestart)
-                RestartApplication();
         }
 
         private static void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             var ex = e.ExceptionObject as Exception;
-            LogException("Background Thread Exception", ex);
-
-            MessageBox.Show($"A critical error occurred:\n\n{ex?.Message}", "Application Crash", MessageBoxButton.OK, MessageBoxImage.Error);
-
-            MainWindow.stopAll();
-            MainWindow.saveAll();
-
-            if (_autoRestart)
-                RestartApplication();
+            HandleFatalException("Background Thread Exception", ex, "Application Crash",
+                $"A critical error occurred:\n\n{ex?.Message}", MessageBoxImage.Error);
         }
 
         private static void OnTaskSchedulerUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            LogException("Task Unobserved Exception", e.Exception);
+            HandleFatalException("Task Unobserved Exception", e.Exception, "Task Error",
+                $"An unobserved task error occurred:\n\n{e.Exception.Message}", MessageBoxImage.Warning);
             e.SetObserved();
+        }
 
-            MessageBox.Show($"An unobserved task error occurred:\n\n{e.Exception.Message}", "Task Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+        // Shared by all three unhandled-exception sources: log it, tell the user, stop
+        // and save application state, then optionally restart.
+        private static void HandleFatalException(string logTitle, Exception ex, string messageBoxTitle, string userMessage, MessageBoxImage icon)
+        {
+            LogException(logTitle, ex);
+            MessageBox.Show(userMessage, messageBoxTitle, MessageBoxButton.OK, icon);
 
             MainWindow.stopAll();
             MainWindow.saveAll();
